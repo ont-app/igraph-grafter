@@ -8,13 +8,14 @@
                  [org.clojure/spec.alpha "0.2.176"]
                  ;; 3rd party libs
                  [lein-doo "0.1.11"]
+                 [grafter "2.1.7"]
                  ;; Ont-app libs
-                 [ont-app/graph-log "0.1.0-SNAPSHOT"]
-                 [ont-app/igraph "0.1.4-SNAPSHOT"]
-                 [ont-app/igraph-vocabulary "0.1.0-SNAPSHOT"]
-                 [ont-app/prototypes "0.1.0-SNAPSHOT"]
-                 [ont-app/validation "0.1.0-SNAPSHOT"]
-                 [ont-app/vocabulary "0.1.0-SNAPSHOT"]
+                 [ont-app/graph-log "0.1.1-SNAPSHOT"]
+                 [ont-app/igraph "0.1.5-SNAPSHOT"]
+                 [ont-app/igraph-vocabulary "0.1.1-SNAPSHOT"]
+                 [ont-app/sparql-client "0.1.1-SNAPSHOT"]
+                 [ont-app/sparql-endpoint "0.1.1-SNAPSHOT"]
+                 [ont-app/vocabulary "0.1.1-SNAPSHOT"]
                  ]
   
   ;; :main ^:skip-aot ont-app.igraph-grafter.core
@@ -25,7 +26,6 @@
             [lein-cljsbuild "1.1.7"
              :exclusions [[org.clojure/clojure]]]
             [lein-doo "0.1.11"]
-            [lein-ancient "0.6.15"]
             ]
   :source-paths ["src"]
   :test-paths ["src" "test"]

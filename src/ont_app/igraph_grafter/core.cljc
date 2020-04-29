@@ -1,6 +1,7 @@
 (ns ont-app.igraph-grafter.core
     (:require
      [ont-app.igraph-grafter.ont :as ont]
+     [ont-app.vocabulary.core :as voc]
      ))
 
 (voc/cljc-put-ns-meta!
@@ -10,7 +11,7 @@
   }
  )
 
-(def ontology ont/ontology)
+(def ontology @ont/ontology-atom)
 
 ;; FUN WITH READER MACROS
 

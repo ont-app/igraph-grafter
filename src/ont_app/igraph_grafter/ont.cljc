@@ -7,15 +7,10 @@
    [ont-app.vocabulary.core :as voc]
    )
   )
-(voc/cljc-put-ns-meta!
- 'ont-app.validation.ont
- {
-  :vann/preferredNamespacePrefix "igraph-grafter"
-  :vann/preferredNamespaceUri "http://rdf.naturallexicon.org/igraph-grafter/ont#"
-  })
 
-(def ontology-ref (atom (make-graph)))
+
+(def ontology-atom (atom (make-graph)))
 
 (defn update-ontology [to-add]
-  (swap! ontology-ref add to-add))
+  (swap! ontology-atom add to-add))
 

@@ -1,10 +1,48 @@
 # ont-app/igraph-grafter
 
+A port of the IGraph protocols to the Grafter protocols.
+
 Part of the ont-app library, dedicated to Ontology-driven development.
 
 ## Usage
 
-FIXME
+Grafter 2.0 defines the following protocols:
+
+- IURIable
+  - ->uri [uri] -> a URI as grafter.vocabularies.core/URI'
+  
+- IStatement
+  - subject 
+  - predicate
+  - object
+  - context
+  
+- ITripleWriteable
+  - add-statement
+  
+- ITripleDeleteable
+  - delete-statement
+  - delete
+  
+- ITripleReadable
+  - to-statements
+  
+- ITransactable
+  - begin
+  - commit
+  - rollback
+
+- ISPARQLable
+  - query-dataset
+  
+- ISPARQLUpdateable
+  - update!
+  
+- IGrafterRDFType
+  ->grafter-type 
+  
+- IRDFString
+
 
 ## License
 
