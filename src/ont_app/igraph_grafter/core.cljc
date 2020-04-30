@@ -12,6 +12,7 @@
     :refer [->Triple
             ->Quad
             add-batched
+            delete
             ]]
 
    [ont-app.graph-log.core :as glog]
@@ -177,91 +178,71 @@
                         []
                         source-graph))))
 
-
-(defmethod igraph/add-to-graph [GrafterGraph :vector]
+(defmethod add-to-graph [GrafterGraph :vector]
   [g to-add]
   {:pre [(= (igraph/mutability g) ::igraph/mutable)]
    }
   (alter-graph add-batched g (add (native-graph/make-graph)
-                                to-add))
-  
-  #_(let [
-        graph-uri (render-element (:graph-uri g))
-        s-uri (render-element (first to-add))
-        ]
-    (grafter/add
-     (:conn g)
-     (value-trace
-      ::CollectedPOsFromVector
-      (reduce (partial collect-p-o graph-uri s-uri)
-              []
-              (partition 2 (rest to-add)))))
-         
-    g))
+                                  ^{::igraph/triples-format :vector}
+                                  to-add)))
 
-#_(defn alter-graph-per-vectors
-  [add-or-delete g to-alter]
-  (let [
-        _collect-p-o (partial collect-p-o (render-element (:graph-uri g)))
-        collect-vector (fn [vacc v]
-                         (reduce (partial _collect-p-o
-                                          (render-element (first v)))       
-                                 vacc
-                                 (partition 2 (rest v))))
-        ]
-    (add-or-delete
-     (:conn g)
-     (value-trace
-      ::CollectedVectorOfVectors
-      (reduce collect-vector [] to-alter)))))
-
-  
-(defmethod igraph/add-to-graph [GrafterGraph :vector-of-vectors]
+(defmethod add-to-graph [GrafterGraph :vector-of-vectors]
   [g to-add]
   {:pre [(= (igraph/mutability g) ::igraph/mutable)]
    }
   (alter-graph add-batched g (add (native-graph/make-graph)
+                                  ^{::igraph/triples-format :vector-of-vectors}
                                   to-add))
-  #_(let [
-        _collect-p-o (partial collect-p-o (render-element (:graph-uri g)))
-        collect-vector (fn [vacc v]
-                         (reduce (partial _collect-p-o
-                                          (render-element (first v)))       
-                                 vacc
-                                 (partition 2 (rest v))))
-        ]
-    (add-batched (:conn g)
-                 (value-trace
-                  ::CollectedVectorOfVectors
-                  (reduce collect-vector [] to-alter))))
     
   g)
 
-
-  
-(defmethod igraph/add-to-graph [GrafterGraph :normal-form]
+(defmethod add-to-graph [GrafterGraph :normal-form]
   [g to-add]
   (alter-graph add-batched g (add (native-graph/make-graph)
+                                  ^{::igraph/triples-format :normal-form}
                                   to-add))
 
-  #_(let [collect-quad (fn [g-uri vacc s p o]
-                       (collect-p-o g-uri
-                                    (render-element s)
-                                    vacc
-                                    [p o]))
-        ]
-    (add-batched
-     (:conn g)
-     (igraph/reduce-spo (partial collect-quad
-                                 (render-element (:graph-uri g)))
-                        []
-                        (native-graph/make-graph :contents to-add)))
-    )
 
   g)
 
+(defmethod igraph/remove-from-graph [GrafterGraph :vector]
+  [g to-remove]
+  (alter-graph delete g (add (native-graph/make-graph)
+                             ^{::igraph/triples-format :vector}
+                             to-remove))
+  g)
+
+(defmethod igraph/remove-from-graph [GrafterGraph :vector-of-vectors]
+  [g to-remove]
+  (alter-graph delete g (add (native-graph/make-graph)
+                             ^{::igraph/triples-format :vector-of-vectors}
+                             to-remove))
+  g)
+
+(defmethod igraph/remove-from-graph [GrafterGraph :normal-form]
+  [g to-remove]
+  (alter-graph delete g (add (native-graph/make-graph)
+                             ^{::igraph/triples-format :normal-form}
+                             to-remove))
+  g)
+
+(defmethod igraph/remove-from-graph [GrafterGraph :underspecified-triple]
+  [g to-remove]
+  (let [adapter (native-graph/make-graph)
+        s (first to-remove)
+        p (unique (rest to-remove))
+        ]
+    (alter-graph delete g
+                 (if (and s (not p))
+                   (add adapter
+                        ^{::igraph/triples-format :normal-form}
+                        {s (g s)})
+                   ;; else there's p
+                   (add adapter
+                        ^{::igraph/triples-format :normal-form}
+                        {s {p (g s p)}}))))
+  g)
 
 
 (defn dummy-fn []
   "The eagle has landed")
-    
