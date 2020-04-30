@@ -24,6 +24,7 @@
   [ont-app.igraph.core :as igraph
     :refer
     [IGraph
+     add!
      add-to-graph
      ask
      difference
@@ -37,7 +38,7 @@
      reduce-spo
      remove-from-graph
      subjects
-     subtract
+     subtract!
      traverse
      triples-format
      union
@@ -106,8 +107,10 @@
   (invoke [g s] (get-p-o g s))
   (invoke [g s p] (match-or-traverse g s p))
   (invoke [g s p o] (match-or-traverse g s p o))
-  ;; igraph/IGraphMutable
-  
+
+  igraph/IGraphMutable
+  (add! [g to-add] (add-to-graph g to-add))
+  (subtract! [g to-remove] (remove-from-graph g to-remove))
   )
 
 (defn make-graph [conn graph-uri]
