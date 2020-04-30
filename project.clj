@@ -7,14 +7,18 @@
                  [org.clojure/clojurescript "1.10.520"]
                  [org.clojure/spec.alpha "0.2.176"]
                  ;; 3rd party libs
-                 [lein-doo "0.1.11"]
+                 [cheshire "5.10.0"]
+                 [com.cognitect/transit-clj "1.0.324"]
+                 [com.taoensso/timbre "4.10.0"]
                  [grafter "2.1.7"]
+                 [lein-doo "0.1.11"]
+                 [selmer "1.12.23"]
                  ;; Ont-app libs
                  [ont-app/graph-log "0.1.1-SNAPSHOT"]
                  [ont-app/igraph "0.1.5-SNAPSHOT"]
                  [ont-app/igraph-vocabulary "0.1.1-SNAPSHOT"]
-                 [ont-app/sparql-client "0.1.1-SNAPSHOT"]
-                 [ont-app/sparql-endpoint "0.1.1-SNAPSHOT"]
+                 ;; [ont-app/sparql-client "0.1.1-SNAPSHOT"]
+                 ;; [ont-app/sparql-endpoint "0.1.1-SNAPSHOT"]
                  [ont-app/vocabulary "0.1.1-SNAPSHOT"]
                  ]
   
