@@ -92,9 +92,9 @@
        (repo/query conn query-string)))
 
 (defrecord GrafterGraph
-    [conn graph-uri]
+    [conn graph-kwi]
   IGraph
-  (normal-form [this] (rdf/query-for-normal-form repo/query (:conn this)))
+  (normal-form [this] (rdf/query-for-normal-form interpret-query (:conn this)))
   (subjects [this] (rdf/query-for-subjects interpret-query (:conn this)))
   (get-p-o [this s] (rdf/query-for-p-o interpret-query (:conn this) s))
   (get-o [this s p] (rdf/query-for-o interpret-query (:conn this) s p))
@@ -113,8 +113,8 @@
   (subtract! [g to-remove] (remove-from-graph g to-remove))
   )
 
-(defn make-graph [conn graph-uri]
-  (->GrafterGraph conn graph-uri))
+(defn make-graph [conn graph-kwi]
+  (->GrafterGraph conn graph-kwi))
 
 (defn render-element [elt]
   "Returns either a URI or a literal to be added to a graph"
@@ -135,7 +135,9 @@
   NOTE: typically called to compose material to add to a graph.
   "
   [graph-uri s acc p-o]
-  {:pre [(vector? acc)]
+  {:pre [(vector? acc)
+         (uri? graph-uri)
+         ]
    }
   (trace ::StartingCollectPO
         :log/graph-uri graph-uri
@@ -177,7 +179,7 @@
     (add-or-delete
      (:conn g)
      (igraph/reduce-spo (partial collect-quad
-                                 (render-element (:graph-uri g)))
+                                 (render-element (:graph-kwi g)))
                         []
                         source-graph))))
 

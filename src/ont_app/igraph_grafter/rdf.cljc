@@ -172,25 +172,28 @@ Where
    (query-for-normal-form (fn [_] nil) query-fn client))
   
   ([graph-uri-fn query-fn client]
-   (letfn [(maybe-kwi-for [x]
-             (if (uri? x)
-               (voc/keyword-for (str x))))
+   (letfn [
            (add-o [o binding]
-            (conj o (maybe-kwi-for (:o binding))))
-          (add-po [po binding]
-            (assoc po (voc/keyword-for (str (:p binding)))
-                   (add-o (get po (:p binding) #{})
-                          binding)))
-          (collect-binding [spo binding]
-            (assoc spo (voc/keyword-for (str (:s binding)))
-                   (add-po (get spo (:s binding) {})
+             (conj o (:o binding)))
+           (add-po [po binding]
+             (assoc po (:p binding)
+                    (add-o (get po (:p binding) #{})
                            binding)))
+           (collect-binding [spo binding]
+             (value-trace
+              ::CollectNormalFormBinding
+              [:log/spo spo
+               :log/binding binding]
+              (assoc spo (:s binding)
+                     (add-po (get spo (:s binding) {})
+                             binding))))
           
           ]
     (let [query (selmer/render normal-form-query-template
                                (query-template-map graph-uri-fn client))
           ]
-      (reduce collect-binding {}
+      (reduce collect-binding
+              {}
               (query-fn client query))))))
 
 

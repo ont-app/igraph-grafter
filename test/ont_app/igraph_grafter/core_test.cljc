@@ -25,7 +25,10 @@
             add-batched
             ]]
    ;; [ont-app.sparql-client.core :as sparql-client]
-   [ont-app.igraph.core :as igraph]
+   [ont-app.igraph.core :as igraph
+    :refer [add!
+            subtract!
+            ]]
    [ont-app.igraph.graph :as native-graph]
    [ont-app.graph-log.core :as glog]
    [ont-app.graph-log.levels :refer :all]
@@ -38,10 +41,10 @@
    ))
 
 (glog/log-reset!)
-(glog/set-level! ::StartingCollectPO :glog/WARN)
-(glog/set-level! ::CollectedPOsFromVector :glog/WARN)
-(glog/set-level! ::CollectedVectorOfVectors :glog/WARN)
-
+;; (glog/set-level! ::StartingCollectPO :glog/WARN)
+;; (glog/set-level! ::CollectedPOsFromVector :glog/WARN)
+;; (glog/set-level! ::CollectedVectorOfVectors :glog/WARN)
+(glog/set-level! ::rdf/CollectNormalFormBinding :glog/WARN)
 (def the igraph/unique)
 
 ;; (def TheValueFactory (. SimpleValueFactory getInstance))
@@ -62,7 +65,12 @@
 (def repo (sail-repo))
 (def conn (->connection repo))
 
+
 (def g (igraphter/make-graph conn ::Test1))
+
+(add! g [::A ::B ::C])
+(add! g [::A ::D ::E])
+
 ;; (add conn T)
 
 ;; (def response (query conn "SELECT * WHERE {?s ?p ?o}"))
