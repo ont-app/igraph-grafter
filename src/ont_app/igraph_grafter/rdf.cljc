@@ -50,6 +50,7 @@ Where
   (value-trace
    ::RenderLiteralDispatch
    [:log/iteral literal]
+   #dbg
    (if-let [special-dispatch (@special-literal-dispatch literal)]
      special-dispatch
      ;; else no special dispatch...

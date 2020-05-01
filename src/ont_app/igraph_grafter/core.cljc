@@ -44,7 +44,7 @@
      union
      unique
      ]]
-  [ont-app.igraph.graph :as native-graph]
+  [ont-app.igraph.graph :as simple-graph]
   [ont-app.igraph-grafter.rdf :as rdf]
   [ont-app.vocabulary.core :as voc]  
   ))
@@ -150,20 +150,23 @@
                                  (map render-element p-o))
                          graph-uri))))
 
+(defn special-literal-dispatch [x]
+  "Returns ::DatatypeURI dispatch value as approprite for `x`.
+NOTE: this is used to field stuff like XSD values."
+  (if (satisfies? grafter/IDatatypeURI x)
+    ::DatatypeURI))
+
+(reset! rdf/special-literal-dispatch special-literal-dispatch)
+        
 (defmethod rdf/render-literal ::DatatypeURI
   [x]
   ;; grafter handles these automatically
   x)
 
-
-(defmethod rdf/render-literal (type 0)
-  [x]
-  x)
-
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`
   Where
-  <source graph> is a native-graph 'adapter' into which content to be removed
+  <source graph> is a simple-graph 'adapter' into which content to be removed
     has been read.
   <g> is a GrafterGraph
   <add-or-delete> := fn [conn [<Quad>, ...]]
@@ -187,7 +190,7 @@
   [g to-add]
   {:pre [(= (igraph/mutability g) ::igraph/mutable)]
    }
-  (alter-graph add-batched g (add (native-graph/make-graph)
+  (alter-graph add-batched g (add (simple-graph/make-graph)
                                   ^{::igraph/triples-format :vector}
                                   to-add)))
 
@@ -195,7 +198,7 @@
   [g to-add]
   {:pre [(= (igraph/mutability g) ::igraph/mutable)]
    }
-  (alter-graph add-batched g (add (native-graph/make-graph)
+  (alter-graph add-batched g (add (simple-graph/make-graph)
                                   ^{::igraph/triples-format :vector-of-vectors}
                                   to-add))
     
@@ -203,7 +206,7 @@
 
 (defmethod add-to-graph [GrafterGraph :normal-form]
   [g to-add]
-  (alter-graph add-batched g (add (native-graph/make-graph)
+  (alter-graph add-batched g (add (simple-graph/make-graph)
                                   ^{::igraph/triples-format :normal-form}
                                   to-add))
 
@@ -212,28 +215,28 @@
 
 (defmethod igraph/remove-from-graph [GrafterGraph :vector]
   [g to-remove]
-  (alter-graph delete g (add (native-graph/make-graph)
+  (alter-graph delete g (add (simple-graph/make-graph)
                              ^{::igraph/triples-format :vector}
                              to-remove))
   g)
 
 (defmethod igraph/remove-from-graph [GrafterGraph :vector-of-vectors]
   [g to-remove]
-  (alter-graph delete g (add (native-graph/make-graph)
+  (alter-graph delete g (add (simple-graph/make-graph)
                              ^{::igraph/triples-format :vector-of-vectors}
                              to-remove))
   g)
 
 (defmethod igraph/remove-from-graph [GrafterGraph :normal-form]
   [g to-remove]
-  (alter-graph delete g (add (native-graph/make-graph)
+  (alter-graph delete g (add (simple-graph/make-graph)
                              ^{::igraph/triples-format :normal-form}
                              to-remove))
   g)
 
 (defmethod igraph/remove-from-graph [GrafterGraph :underspecified-triple]
   [g to-remove]
-  (let [adapter (native-graph/make-graph)
+  (let [adapter (simple-graph/make-graph)
         s (first to-remove)
         p (unique (rest to-remove))
         ]
@@ -248,6 +251,3 @@
                         {s {p (g s p)}}))))
   g)
 
-
-(defn dummy-fn []
-  "The eagle has landed")
