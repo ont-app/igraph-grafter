@@ -153,11 +153,17 @@
 (defn special-literal-dispatch [x]
   "Returns ::DatatypeURI dispatch value as approprite for `x`.
 NOTE: this is used to field stuff like XSD values."
-  (if (satisfies? grafter/IDatatypeURI x)
-    ::DatatypeURI))
+  (cond (inst? x)
+        ::Instant
+        (satisfies? grafter/IDatatypeURI x)
+        ::DatatypeURI))
 
 (reset! rdf/special-literal-dispatch special-literal-dispatch)
-        
+
+(defmethod rdf/render-literal ::Instant
+  [ts]
+  (str (.toInstant ts))) ;;"^^" grafter.vocabularies.xsd/xsd:dateTime))
+
 (defmethod rdf/render-literal ::DatatypeURI
   [x]
   ;; grafter handles these automatically
