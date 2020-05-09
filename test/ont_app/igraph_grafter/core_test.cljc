@@ -71,6 +71,16 @@
 (add! g [::A ::B ::C])
 (add! g [::A ::D ::E])
 
+(deftest literals
+  (testing "literals"
+    (is (= (rdf/render-literal #inst "2000")
+           "2000-01-01T00:00:00Z"))
+    (is (= (rdf/render-literal 1)
+           1))
+    (is (= (rdf/render-literal #lstr "blah@en")
+           "\"blah\"@en"))
+    ))
+
 ;; (add conn T)
 
 ;; (def response (query conn "SELECT * WHERE {?s ?p ?o}"))

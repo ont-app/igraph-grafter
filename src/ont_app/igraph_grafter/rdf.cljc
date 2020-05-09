@@ -32,6 +32,42 @@ Where
    (str "\"" s "\"")
    ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; LANGSTR
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftype LangStr [s lang]
+  Object
+  (toString [_] s)
+  (equals [this that]
+    (and (instance? LangStr that)
+         (= s (.s that))
+         (= lang (.lang that)))))
+
+
+(defn lang [langStr]
+  (.lang langStr))
+
+(defmethod print-method LangStr
+  [literal ^java.io.Writer w]
+  (.write w (str "#lstr \"" literal "@" (.lang literal) "\"")))
+
+(defmethod print-dup LangStr [o ^java.io.Writer w]
+  (print-method o w))
+
+(defn ^LangStr read-LangStr [form]
+  (let [langstring-re #"^(.*)@([-a-zA-Z]+)" 
+        m (re-matches langstring-re form)
+        ]
+    (when (not= (count m) 3)
+      (throw (ex-info "Bad LangString fomat"
+                      {:type ::BadLangstringFormat
+                       :regex langstring-re
+                       :form form})))
+    (let [[_ s lang] m]
+      (LangStr. s lang))))
+
+;; RENDER LITERAL
+
 (def special-literal-dispatch
   "A function [x] -> <dispatch-value>
   Where
@@ -50,13 +86,13 @@ Where
   (value-trace
    ::RenderLiteralDispatch
    [:log/iteral literal]
-   #dbg
    (if-let [special-dispatch (@special-literal-dispatch literal)]
      special-dispatch
      ;; else no special dispatch...
    (cond
      ;; (inst? literal) ::instant
      ;; (endpoint/xsd-type-uri literal) ::xsd-type
+     (instance? LangStr literal) ::LangStr
      :default (type literal)))))
 
 (defmulti render-literal

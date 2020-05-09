@@ -1,13 +1,13 @@
 (ns ont-app.igraph-grafter.core
   (:require
-  [grafter-2.rdf4j.repository :as repo
-   :refer [
-           ->connection
-           sail-repo
-           ]]
-  [grafter.vocabularies.core :as gvoc
-   :refer [->uri
-           ]]
+   [grafter-2.rdf4j.repository :as repo
+    :refer [
+            ->connection
+            sail-repo
+            ]]
+   [grafter.vocabularies.core :as gvoc
+    :refer [->uri
+            ]]
    [grafter-2.rdf.protocols :as grafter
     :refer [->Triple
             ->Quad
@@ -21,9 +21,10 @@
    [ont-app.igraph-grafter.rdf :as rdf]
    [ont-app.igraph-grafter.ont :as ont]
    
-  [ont-app.igraph.core :as igraph
+   [ont-app.igraph.core :as igraph
     :refer
     [IGraph
+     add
      add!
      add-to-graph
      ask
@@ -44,10 +45,10 @@
      union
      unique
      ]]
-  [ont-app.igraph.graph :as simple-graph]
-  [ont-app.igraph-grafter.rdf :as rdf]
-  [ont-app.vocabulary.core :as voc]  
-  ))
+   [ont-app.igraph.graph :as simple-graph]
+   [ont-app.igraph-grafter.rdf :as rdf]
+   [ont-app.vocabulary.core :as voc]  
+   ))
 
 
 (voc/put-ns-meta!
@@ -83,12 +84,23 @@
            (voc/keyword-for (str v))
            v)))
 
+(defn collect-kwis-and-lstrs [macc k v]
+  (warn ::starting-kwis-and-lstrs
+         :log/k k
+         :log/v v)
+  (assoc macc k
+         (cond
+           (= (type v) java.net.URI) (voc/keyword-for (str v))
+           (and (map? v) (:string v) (:lang v))
+           (rdf/->LangStr (:string v) (name (:lang v)))
+           :default v)))
+
 (defn ask-query [conn query-string]
   (repo/query conn query-string))
 
 (defn interpret-query [conn query-string]
   (map (fn [bmap]
-         (reduce-kv collect-kwis {} bmap))
+         (reduce-kv collect-kwis-and-lstrs {} bmap))
        (repo/query conn query-string)))
 
 (defrecord GrafterGraph
@@ -154,20 +166,26 @@
   "Returns ::DatatypeURI dispatch value as approprite for `x`.
 NOTE: this is used to field stuff like XSD values."
   (cond (inst? x)
-        ::Instant
+        :grafter/Instant
         (satisfies? grafter/IDatatypeURI x)
-        ::DatatypeURI))
+        :grafter/DatatypeURI))
 
 (reset! rdf/special-literal-dispatch special-literal-dispatch)
 
-(defmethod rdf/render-literal ::Instant
+(defmethod rdf/render-literal :grafter/Instant
   [ts]
   (str (.toInstant ts))) ;;"^^" grafter.vocabularies.xsd/xsd:dateTime))
 
-(defmethod rdf/render-literal ::DatatypeURI
+(defmethod rdf/render-literal :grafter/DatatypeURI
   [x]
   ;; grafter handles these automatically
   x)
+
+(defmethod rdf/render-literal ::rdf/LangStr
+  [lstr]
+  (grafter-2.rdf.protocols/->LangString
+   (str lstr)
+   (rdf/lang lstr)))
 
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`
