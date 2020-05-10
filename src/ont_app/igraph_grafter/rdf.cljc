@@ -17,7 +17,8 @@
    [ont-app.vocabulary.core :as voc]
 
    )
-  
+   (:import [java.io ByteArrayInputStream ByteArrayOutputStream])
+            
   )
 
 (def prefixed voc/prepend-prefix-declarations)
@@ -65,6 +66,76 @@ Where
                        :form form})))
     (let [[_ s lang] m]
       (LangStr. s lang))))
+
+
+(def transit-write-handlers
+  "Atom of the form {<Class> <write-handler>, ...}
+  Where
+  <Class> is a direct reference to the class instance to be encoded
+  <write-handler> := fn [s] -> {<field> <value>, ...}
+  " 
+  (atom
+   {LangStr
+    (cognitect.transit/write-handler
+     "ont-app.igraph-grafter.rdf.LangStr"
+     (fn [ls]
+       {:lang (.lang ls)
+        :s (.s ls)
+        }))
+    }))
+
+  
+(defn render-transit-json 
+  "Returns a string of transit for `value`
+  Where
+  <value> is any value that be handled by cognitict/transit
+  Note: custom datatypes will be informed by @transit-write-handlers
+  "
+  [value]
+  (let [output-stream (ByteArrayOutputStream.)
+        ]
+    (transit/write
+     (transit/writer output-stream :json {:handlers @transit-write-handlers})
+     value)
+    (String. (.toByteArray output-stream))))
+
+
+(def transit-read-handlers
+  "Atom of the form {<className> <read-handler>
+  Where
+  <className> is a fully qualified string naming a class to be encoded
+  <read-handler> := fn [from-rep] -> <instance>
+  <from-rep> := an Object s.t. (<field> from-rep), encoded in corresponding
+    write-handler in @`transit-write-handlers`.
+  "
+  (atom
+   {"ont-app.igraph-grafter.rdf.LangStr"
+    (cognitect.transit/read-handler
+     (fn [from-rep]
+       (->LangStr (:s from-rep) (:lang from-rep))))
+    }
+    ))
+
+(defn read-transit-json
+  "Returns a value parsed from transit string `s`
+  Where
+  <s> is a &quot;-escaped string encoded as transit
+  Note: custom datatypes will be informed by @transit-read-handlers
+  "
+  [^String s]
+  (transit/read
+   (transit/reader
+    (ByteArrayInputStream. (.getBytes (clojure.string/replace s "&quot;" "\"")
+                                      "UTF-8"))
+    :json
+    {:handlers @transit-read-handlers})))
+
+(defn render-literal-as-transit-json
+  "Returns 'x^^transit:json'
+  NOTE: this will be encoded on write and decoded on read by the
+    cognitect/transit library."
+  [x]
+  (selmer/render "\"{{x}}\"^^transit:json" {:x (render-transit-json x)}))
 
 ;; RENDER LITERAL
 

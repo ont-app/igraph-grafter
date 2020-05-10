@@ -95,12 +95,33 @@
            (rdf/->LangStr (:string v) (name (:lang v)))
            :default v)))
 
+(defn collect-kwis-and-literals [macc k v]
+  (warn ::starting-kwis-and-literals
+         :log/k k
+         :log/v v)
+  (let [transit-re #"\"(.*)\"\^\^transit:json$"] ;; matches transit stuff
+    (assoc macc k
+           (cond
+             ;; URIs ...
+             (= (type v) java.net.URI)
+             (voc/keyword-for (str v))
+             ;; Transit-tagged data ...
+             (and (string? v)
+                  (re-matches transit-re v))
+             (let [matches (re-matches transit-re v)]
+               (rdf/read-transit-json (matches 1)))
+             ;; language-tagged strings ...
+             (and (map? v) (:string v) (:lang v))
+             (rdf/->LangStr (:string v) (name (:lang v)))
+             ;; otherwise just return v
+             :default v))))
+
 (defn ask-query [conn query-string]
   (repo/query conn query-string))
 
 (defn interpret-query [conn query-string]
   (map (fn [bmap]
-         (reduce-kv collect-kwis-and-lstrs {} bmap))
+         (reduce-kv collect-kwis-and-literals {} bmap))
        (repo/query conn query-string)))
 
 (defrecord GrafterGraph
@@ -186,6 +207,10 @@ NOTE: this is used to field stuff like XSD values."
   (grafter-2.rdf.protocols/->LangString
    (str lstr)
    (rdf/lang lstr)))
+
+(defmethod rdf/render-literal (type [])
+  [v]
+  (rdf/render-literal-as-transit-json v))
 
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`
