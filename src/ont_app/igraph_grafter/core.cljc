@@ -77,7 +77,7 @@
   ([]
    (sail-repo)))
 
-^:reduce-kw-fn
+^:reduce-kv-fn
 (defn collect-kwis [macc k v]
   (assoc macc k
          (if (= (type v) java.net.URI)
@@ -95,8 +95,19 @@
            (rdf/->LangStr (:string v) (name (:lang v)))
            :default v)))
 
+^:reduce-kv-fn
 (defn collect-kwis-and-literals [macc k v]
-  (warn ::starting-kwis-and-literals
+  "Returns `macc`' substituing interpretation of `v`
+Where
+<macc> := {<k> <v'>, ...}, translated from a binding map from a query
+<k> is a var in a query
+<v> is the raw value bound to <k>
+<v'> is the translation of <v>
+  URIs -> voc keywords
+  {:lang  ... :string ...} #lstr <string>@<lang>
+  ...^transit:json -> decoded transit
+"
+  (trace ::starting-kwis-and-literals
          :log/k k
          :log/v v)
   (let [transit-re #"\"(.*)\"\^\^transit:json$"] ;; matches transit stuff
