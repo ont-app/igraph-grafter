@@ -61,6 +61,7 @@
 
 (def ontology @ont/ontology-atom)
 
+
 ;; FUN WITH READER MACROS
 
 #?(:cljs
@@ -78,6 +79,10 @@
   ([]
    (sail-repo)))
 
+(def date-time-regex #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+(spec/def ::date-time-str
+  (fn [s] (and (string? s) (re-matches date-time-regex s))))
+
 ^:reduce-kv-fn
 (defn collect-kwis [macc k v]
   (assoc macc k
@@ -86,7 +91,7 @@
            v)))
 
 (defn collect-kwis-and-lstrs [macc k v]
-  (warn ::starting-kwis-and-lstrs
+  (trace ::starting-kwis-and-lstrs
          :log/k k
          :log/v v)
   (assoc macc k
@@ -108,7 +113,7 @@ Where
   {:lang  ... :string ...} #lstr <string>@<lang>
   ...^transit:json -> decoded transit
 "
-  (trace ::starting-kwis-and-literals
+  (trace ::StartingKwisAndLiterals
          :log/k k
          :log/v v)
     (assoc macc k
@@ -116,6 +121,9 @@ Where
              ;; URIs ...
              (= (type v) java.net.URI)
              (voc/keyword-for (str v))
+             ;; Instant
+             (spec/valid? ::date-time-str v)
+             (clojure.instant/read-instant-date v)
              ;; Transit-tagged data ...
              (spec/valid? ::rdf/transit-tag v)
              (let [matches (re-matches rdf/transit-re v)]
@@ -220,9 +228,12 @@ NOTE: this is used to field stuff like XSD values."
    (str lstr)
    (rdf/lang lstr)))
 
-(derive (type []) :rdf/TransitData)
-(derive (type #{}) :rdf/TransitData)
-(derive (type {}) :rdf/TransitData)
+(derive clojure.lang.PersistentVector :rdf/TransitData)
+(derive clojure.lang.PersistentHashSet :rdf/TransitData)
+(derive clojure.lang.PersistentArrayMap :rdf/TransitData)
+(derive clojure.lang.PersistentList :rdf/TransitData)
+(derive clojure.lang.Cons :rdf/TransitData)
+(derive clojure.lang.LazySeq :rdf/TransitData)
 
 (defmethod rdf/render-literal :rdf/TransitData
   [v]
@@ -239,7 +250,7 @@ NOTE: this is used to field stuff like XSD values."
     either grafter/add-batched or grafter/delete
   "
   [add-or-delete g source-graph]
-  (trace ::StartingAlterGraph
+  (warn ::StartingAlterGraph
          :log/source-graph source-graph)
   (let [collect-quad (fn [g-uri vacc s p o]
                        (collect-p-o g-uri

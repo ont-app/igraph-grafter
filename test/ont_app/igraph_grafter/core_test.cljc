@@ -44,7 +44,8 @@
 ;; (glog/set-level! ::StartingCollectPO :glog/WARN)
 ;; (glog/set-level! ::CollectedPOsFromVector :glog/WARN)
 ;; (glog/set-level! ::CollectedVectorOfVectors :glog/WARN)
-(glog/set-level! ::rdf/CollectNormalFormBinding :glog/WARN)
+;; (glog/set-level! ::rdf/CollectNormalFormBinding :glog/WARN)
+
 (def the igraph/unique)
 
 ;; (def TheValueFactory (. SimpleValueFactory getInstance))
@@ -66,19 +67,34 @@
 (def conn (->connection repo))
 
 
-(def g (igraphter/make-graph conn ::Test1))
+(def g (igraphter/make-graph conn ::Test))
 
-(add! g [::A ::B ::C])
-(add! g [::A ::D ::E])
-
-(deftest literals
-  (testing "literals"
-    (is (= (rdf/render-literal #inst "2000")
-           "2000-01-01T00:00:00Z"))
-    (is (= (rdf/render-literal 1)
-           1))
-    (is (= (rdf/render-literal #lstr "blah@en")
-           "\"blah\"@en"))
+(deftest literals-tests
+  (glog/log-reset!)
+  (glog/set-level! ::igraphter/StartingKwisAndLiterals :glog/INFO)
+  (testing "literals should render and complete round trip"
+    (let [i #inst "2000"
+          ]
+      (add! g [::LiteralsTest ::hasInst i])
+      (is (= (rdf/render-literal i)
+             "2000-01-01T00:00:00Z"))
+      (is (= (the (g ::LiteralsTest ::hasInst))
+             i)))
+    (let [i 1]
+      (add! g [::LiteralsTest ::hasInt i])
+      (is (= (rdf/render-literal 1)
+             1))
+      (is (= (the (g ::LiteralsTest ::hasInt))
+             1)))
+    (let [ls #lstr "blah@en"
+          lsl (rdf/render-literal #lstr "blah@en")]
+      (add! g [::LiteralsTest ::hasLangStr ls])
+      (is (instance? grafter_2.rdf.protocols.LangString lsl))
+      (is (= (:string lsl "blah")))
+      (is (= (:lang lsl "en")))
+      (is (= (the (g ::LiteralsTest ::hasLangStr))
+             ls))
+      )
     ))
 
 ;; (add conn T)
