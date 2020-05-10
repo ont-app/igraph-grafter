@@ -23,8 +23,17 @@
 
 (def prefixed voc/prepend-prefix-declarations)
 
+
+;; SPECS
+(def transit-re
+  "Matches data tagged as transit"
+  #"^\"(.*)\"\^\^transit:json$")
+
+(spec/def ::transit-tag (spec/and string? (fn [s] (re-matches transit-re s))))
+
+;; LITERAL SUPPORT
 (defn quote-str [s]
-  "Returns `s`, in excaped quotation marks.
+  "Returns `s`, in escaped quotation marks.
 Where
 <s> is a string, typically to be rendered in a query or RDF source.
 "

@@ -1,5 +1,6 @@
 (ns ont-app.igraph-grafter.core
   (:require
+   [clojure.spec.alpha :as spec]
    [grafter-2.rdf4j.repository :as repo
     :refer [
             ->connection
@@ -110,24 +111,23 @@ Where
   (trace ::starting-kwis-and-literals
          :log/k k
          :log/v v)
-  (let [transit-re #"\"(.*)\"\^\^transit:json$"] ;; matches transit stuff
     (assoc macc k
            (cond
              ;; URIs ...
              (= (type v) java.net.URI)
              (voc/keyword-for (str v))
              ;; Transit-tagged data ...
-             (and (string? v)
-                  (re-matches transit-re v))
-             (let [matches (re-matches transit-re v)]
+             (spec/valid? ::rdf/transit-tag v)
+             (let [matches (re-matches rdf/transit-re v)]
                (rdf/read-transit-json (matches 1)))
              ;; language-tagged strings ...
              (and (map? v) (:string v) (:lang v))
              (rdf/->LangStr (:string v) (name (:lang v)))
              ;; otherwise just return v
-             :default v))))
+             :default v)))
 
 (defn ask-query [conn query-string]
+  "Returns true/false for `query-string` posed to `conn`"
   (repo/query conn query-string))
 
 (defn interpret-query [conn query-string]
@@ -213,15 +213,21 @@ NOTE: this is used to field stuff like XSD values."
   ;; grafter handles these automatically
   x)
 
-(defmethod rdf/render-literal ::rdf/LangStr
+
+(defmethod rdf/render-literal :rdf/LangStr
   [lstr]
   (grafter-2.rdf.protocols/->LangString
    (str lstr)
    (rdf/lang lstr)))
 
-(defmethod rdf/render-literal (type [])
+(derive (type []) :rdf/TransitData)
+(derive (type #{}) :rdf/TransitData)
+(derive (type {}) :rdf/TransitData)
+
+(defmethod rdf/render-literal :rdf/TransitData
   [v]
   (rdf/render-literal-as-transit-json v))
+
 
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`
@@ -233,6 +239,8 @@ NOTE: this is used to field stuff like XSD values."
     either grafter/add-batched or grafter/delete
   "
   [add-or-delete g source-graph]
+  (trace ::StartingAlterGraph
+         :log/source-graph source-graph)
   (let [collect-quad (fn [g-uri vacc s p o]
                        (collect-p-o g-uri
                                     (render-element s)

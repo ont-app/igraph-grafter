@@ -14,6 +14,15 @@
   :vann/preferredNamespaceUri "http://rdf/naturallexicon.org/grafter#"
   })
 
+(voc/put-ns-meta!
+ 'cognitect.transit
+ {
+  :vann/preferredNamespacePrefix "transit"
+  :vann/preferredNamespaceUri "http://rdf.naturallexicon.org/ns/cognitect.transit#"
+  :dc/description "Functionality for the transit serialization format"
+  :foaf/homepage "https://github.com/cognitect/transit-format"
+  })
+
 (def ontology-atom (atom (make-graph)))
 
 (defn update-ontology [to-add]
@@ -32,7 +41,7 @@
   ])
 
 ;; TRANSIT SUPPORT
-(update-ontology!
+(update-ontology
  [[:igraph/SerializationFormat
    :rdf/type :rdfs/Class
    :rdfs/comment "Refers to a format used to encode/decode values"
