@@ -56,8 +56,10 @@
  'ont-app.igraph-grafter.core
  {
   :voc/mapsTo 'ont-app.igraph-grafter.ont
-  }
- )
+  :doc "Defines `GrafterGraph` record, which implements the `IGraph`,
+  `IGraphMutable` and `IFn` protocols."
+  :author "Eric D. Scott"
+  } )
 
 (def ontology @ont/ontology-atom)
 
@@ -75,43 +77,24 @@
 ;; NO READER MACROS BEYOND THIS POINT
 
 
-#_(defn make-graph
-  ([]
-   (sail-repo)))
+(def date-time-regex
+  "Matches the date-time-str encoded for #inst's, e.g. '2000-01-01T00:00:00Z'"
+  #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
-(def date-time-regex #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 (spec/def ::date-time-str
   (fn [s] (and (string? s) (re-matches date-time-regex s))))
 
 ^:reduce-kv-fn
-(defn collect-kwis [macc k v]
-  (assoc macc k
-         (if (= (type v) java.net.URI)
-           (voc/keyword-for (str v))
-           v)))
-
-(defn collect-kwis-and-lstrs [macc k v]
-  (trace ::starting-kwis-and-lstrs
-         :log/k k
-         :log/v v)
-  (assoc macc k
-         (cond
-           (= (type v) java.net.URI) (voc/keyword-for (str v))
-           (and (map? v) (:string v) (:lang v))
-           (rdf/->LangStr (:string v) (name (:lang v)))
-           :default v)))
-
-^:reduce-kv-fn
 (defn collect-kwis-and-literals [macc k v]
-  "Returns `macc`' substituing interpretation of `v`
+  "Returns `macc`' substituing translation of `v` -> idomatic igraph datatypes
 Where
 <macc> := {<k> <v'>, ...}, translated from a binding map from a query
 <k> is a var in a query
 <v> is the raw value bound to <k>
-<v'> is the translation of <v>
-  URIs -> voc keywords
+<v'> is the translation of <v> into idiomatic igraph datatypes:
+  URIs -> KWIs
   {:lang  ... :string ...} #lstr <string>@<lang>
-  ...^transit:json -> decoded transit
+  .*^^transit:json -> decoded transit
 "
   (trace ::StartingKwisAndLiterals
          :log/k k
@@ -139,6 +122,14 @@ Where
   (repo/query conn query-string))
 
 (defn interpret-query [conn query-string]
+  "Returns (<bmap'>, ...)  returned from `query-string` posed to `conn`
+Where
+<query-string> is a SPARQL query
+<conn> is a grafter connection implementing the proper interfaces for a query
+<bmap'> := <bmap>, with datatypes translated to idiomatic igraph clojure objects 
+  as appropriate, per the `collect-kwis-and-literals` function.
+<bmap> is a binding map returned by posing <query-string> to <conn>
+"
   (map (fn [bmap]
          (reduce-kv collect-kwis-and-literals {} bmap))
        (repo/query conn query-string)))
@@ -165,7 +156,22 @@ Where
   (subtract! [g to-remove] (remove-from-graph g to-remove))
   )
 
-(defn make-graph [conn graph-kwi]
+(defn make-graph 
+  "Returns an instance of `GrafterGraph` for `conn` and `graph-kwi`
+Where
+<conn> implements the ??? protocols
+<graph-kwi> is a keyword mapped to a URI by voc namespace metadata.
+See also the documentation for ont-app.vocabulary.core
+"
+  [conn graph-kwi]
+  {:pre [(satisfies? grafter/ITripleReadable conn)
+         (satisfies? grafter/ISPARQLable conn)
+         (satisfies? grafter/ITripleWriteable conn)
+         (satisfies? grafter/ITripleDeleteable conn)
+         (satisfies? grafter/ITransactable conn)
+         ]
+   }
+  (warn ::InMakeGraph)
   (->GrafterGraph conn graph-kwi))
 
 (defn render-element [elt]
@@ -192,10 +198,10 @@ Where
          ]
    }
   (trace ::StartingCollectPO
-        :log/graph-uri graph-uri
-        :log/s s
-        :log/acc acc
-        :log/p-o p-o)
+         :log/graph-uri graph-uri
+         :log/s s
+         :log/acc acc
+         :log/p-o p-o)
   (conj acc (apply ->Quad
                    (conj (reduce conj
                                  [s]
@@ -203,14 +209,24 @@ Where
                          graph-uri))))
 
 (defn special-literal-dispatch [x]
-  "Returns ::DatatypeURI dispatch value as approprite for `x`.
-NOTE: this is used to field stuff like XSD values."
+  "Returns :grafter/Instant,  :grafter/DatatypeURI or nil for `x`.
+Where
+<x> is a literal value 
+`:grafter/Instant` triggers handling of an #inst
+`:grafter/DatatypeURI` triggers handling as an xsd value or other ^^datatype.
+`nil` signals handling with standard logic for literals per
+  `rdf/render-literal-dispatch`
+"
+  
   (cond (inst? x)
         :grafter/Instant
+        
         (satisfies? grafter/IDatatypeURI x)
         :grafter/DatatypeURI))
 
+;; This will inform rdf/render-literal-dispatch of platform-specific dispatches:
 (reset! rdf/special-literal-dispatch special-literal-dispatch)
+
 
 (defmethod rdf/render-literal :grafter/Instant
   [ts]
@@ -221,24 +237,12 @@ NOTE: this is used to field stuff like XSD values."
   ;; grafter handles these automatically
   x)
 
-
+;; Grafter has its own native LangStr regime...
 (defmethod rdf/render-literal :rdf/LangStr
   [lstr]
   (grafter-2.rdf.protocols/->LangString
    (str lstr)
    (rdf/lang lstr)))
-
-(derive clojure.lang.PersistentVector :rdf/TransitData)
-(derive clojure.lang.PersistentHashSet :rdf/TransitData)
-(derive clojure.lang.PersistentArrayMap :rdf/TransitData)
-(derive clojure.lang.PersistentList :rdf/TransitData)
-(derive clojure.lang.Cons :rdf/TransitData)
-(derive clojure.lang.LazySeq :rdf/TransitData)
-
-(defmethod rdf/render-literal :rdf/TransitData
-  [v]
-  (rdf/render-literal-as-transit-json v))
-
 
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`
@@ -320,11 +324,11 @@ NOTE: this is used to field stuff like XSD values."
         p (unique (rest to-remove))
         ]
     (alter-graph delete g
-                 (if (and s (not p))
+                 (if (and s (not p)) ;; [<s>]
                    (add adapter
                         ^{::igraph/triples-format :normal-form}
                         {s (g s)})
-                   ;; else there's p
+                   ;; else [<s> <p>]
                    (add adapter
                         ^{::igraph/triples-format :normal-form}
                         {s {p (g s p)}}))))

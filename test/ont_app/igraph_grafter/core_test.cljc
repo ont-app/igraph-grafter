@@ -48,21 +48,6 @@
 
 (def the igraph/unique)
 
-;; (def TheValueFactory (. SimpleValueFactory getInstance))
-
-;; (def A (.createIRI TheValueFactory "http://exammple.com/A"))
-
-;; (def AAA (.createStatement TheValueFactory
-;;                            A
-;;                            A
-;;                            A
-;;                            A))
-
-
-;; (def A (->url "http://example.com/A"))
-        ;; (def A (->url (voc/uri-for ::A)))
-        ;; (def T (->Triple A A A))
-
 (def repo (sail-repo))
 (def conn (->connection repo))
 
@@ -138,6 +123,3 @@
 
 
 
-(deftest dummy-test
-  (testing "fixme"
-    (is (= 1 2))))

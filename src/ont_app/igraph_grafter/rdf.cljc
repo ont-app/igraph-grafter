@@ -1,4 +1,14 @@
 (ns ont-app.igraph-grafter.rdf
+
+  {:doc "This is a backstop for shared logic between various RDF-based
+  implementations of IGraph. 
+It includes:
+- support for LangStr using the #lstr custom reader
+- support for ^^transit:json datatype tags
+- templating utilities for the standard IGraph member access methods.
+ "
+   :author "Eric D. Scott"
+   }
   (:require
    [clojure.string :as s]
    [clojure.java.io :as io]
@@ -26,12 +36,15 @@
 
 ;; SPECS
 (def transit-re
-  "Matches data tagged as transit"
+  "Matches data tagged as transit:json"
   #"^\"(.*)\"\^\^transit:json$")
 
 (spec/def ::transit-tag (spec/and string? (fn [s] (re-matches transit-re s))))
 
+;;;;;;;;;;;;;;;;;;;;
 ;; LITERAL SUPPORT
+;;;;;;;;;;;;;;;;;;;;
+
 (defn quote-str [s]
   "Returns `s`, in escaped quotation marks.
 Where
@@ -179,40 +192,20 @@ Where
   "Returns an RDF (Turtle) rendering of `literal`"
   render-literal-dispatch)
 
+;; standard clojure containers renders as transit by default.
+;; Note that you can undo this with 'underive', in which case
+;; it will probably be rendered as a string, unless you want
+;; to write your own method...
+(derive clojure.lang.PersistentVector :rdf/TransitData)
+(derive clojure.lang.PersistentHashSet :rdf/TransitData)
+(derive clojure.lang.PersistentArrayMap :rdf/TransitData)
+(derive clojure.lang.PersistentList :rdf/TransitData)
+(derive clojure.lang.Cons :rdf/TransitData)
+(derive clojure.lang.LazySeq :rdf/TransitData)
 
-;; (defmethod render-literal ::instant
-;;   [instant]
-;;   (let [xsd-uri (endpoint/xsd-type-uri
-;;                  (if (not (instance? java.time.Instant instant))
-;;                    (.toInstant instant)
-;;                    instant))
-;;         ]
-;;     (str (quote-str (.toInstant instant))
-;;          "^^"
-;;          (voc/qname-for (kwi-for xsd-uri)))))
-
-;; (defmethod render-literal ::xsd-type
-;;   [xsd-value]
-;;   (let [xsd-uri (endpoint/xsd-type-uri xsd-value)]
-;;     (str (quote-str xsd-value) "^^" (voc/qname-for (kwi-for xsd-uri)))))
-
-
-;; (defmethod render-literal (type #langStr "@en")
-;;   [lang-str]
-;;   (str (quote-str (str lang-str)) "@" (endpoint/lang lang-str)))
-
-;; (defmethod render-literal (type [])
-;;   [v]
-;;   (render-literal-as-transit-json v))
-
-;; (defmethod render-literal (type {})
-;;   [m]
-;;   (render-literal-as-transit-json m))
-
-;; (defmethod render-literal (type '(nil))
-;;   [s]
-;;   (render-literal-as-transit-json s))
-
+(defmethod render-literal :rdf/TransitData
+  [v]
+  (render-literal-as-transit-json v))
 
 (defmethod render-literal :default
   [s]
@@ -228,6 +221,9 @@ Where
 
 (spec/def ::bnode-kwi bnode-kwi?)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; STANDARD TEMPLATES FOR IGRAPH MEMBER ACCESS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- query-template-map [graph-uri-fn client]
   "Returns {<k> <v>, ...} appropriate for <client>

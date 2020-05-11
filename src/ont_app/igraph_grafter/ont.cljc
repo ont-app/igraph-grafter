@@ -12,6 +12,7 @@
  'ont-app.igraph-grafter.ont
  {:vann/preferredNamespacePrefix "grafter"
   :vann/preferredNamespaceUri "http://rdf/naturallexicon.org/grafter#"
+  :dc/description "Supporting ontology for igraph-grafter"
   })
 
 (voc/put-ns-meta!
