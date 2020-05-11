@@ -17,8 +17,7 @@
                  [ont-app/graph-log "0.1.1-SNAPSHOT"]
                  [ont-app/igraph "0.1.5-SNAPSHOT"]
                  [ont-app/igraph-vocabulary "0.1.1-SNAPSHOT"]
-                 ;; [ont-app/sparql-client "0.1.1-SNAPSHOT"]
-                 ;; [ont-app/sparql-endpoint "0.1.1-SNAPSHOT"]
+                 [ont-app/rdf "0.1.0-SNAPSHOT"]
                  [ont-app/vocabulary "0.1.1-SNAPSHOT"]
                  ]
   

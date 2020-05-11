@@ -33,7 +33,7 @@
    [ont-app.graph-log.core :as glog]
    [ont-app.graph-log.levels :refer :all]
    [ont-app.igraph-grafter.core :as igraphter]
-   [ont-app.igraph-grafter.rdf :as rdf]
+   [ont-app.rdf.core :as rdf]
    [ont-app.vocabulary.core :as voc]
    )
   (:import

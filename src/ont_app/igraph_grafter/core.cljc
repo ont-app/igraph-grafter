@@ -19,7 +19,6 @@
    [ont-app.graph-log.core :as glog]
    [ont-app.graph-log.levels :refer :all]
    
-   [ont-app.igraph-grafter.rdf :as rdf]
    [ont-app.igraph-grafter.ont :as ont]
    
    [ont-app.igraph.core :as igraph
@@ -47,7 +46,8 @@
      unique
      ]]
    [ont-app.igraph.graph :as simple-graph]
-   [ont-app.igraph-grafter.rdf :as rdf]
+   [ont-app.igraph-vocabulary.core :as igv]
+   [ont-app.rdf.core :as rdf]
    [ont-app.vocabulary.core :as voc]  
    ))
 
@@ -61,8 +61,10 @@
   :author "Eric D. Scott"
   } )
 
-(def ontology @ont/ontology-atom)
-
+(def ontology (reduce igraph/union
+                      [igv/ontology
+                       rdf/ontology
+                       @ont/ontology-atom]))
 
 ;; FUN WITH READER MACROS
 
@@ -74,7 +76,7 @@
    (defn on-js-reload [] )
    )
 
-;; NO READER MACROS BEYOND THIS POINT
+;; NO READER MACROS BEYOND THIS POINT (except in def of GrafterGraph)
 
 
 (def date-time-regex
@@ -158,9 +160,10 @@ Where
 
 (defn make-graph 
   "Returns an instance of `GrafterGraph` for `conn` and `graph-kwi`
-Where
-<conn> implements the ??? protocols
-<graph-kwi> is a keyword mapped to a URI by voc namespace metadata.
+  Where
+  <conn> implements the grafter ITripleReadable, ISPARQLable,
+    ITripleWriteable, ITripleDeleteable, and ITransactable protocols
+  <graph-kwi> is a keyword mapped to a URI by voc namespace metadata.
 See also the documentation for ont-app.vocabulary.core
 "
   [conn graph-kwi]
@@ -171,7 +174,6 @@ See also the documentation for ont-app.vocabulary.core
          (satisfies? grafter/ITransactable conn)
          ]
    }
-  (warn ::InMakeGraph)
   (->GrafterGraph conn graph-kwi))
 
 (defn render-element [elt]
@@ -238,7 +240,7 @@ Where
   x)
 
 ;; Grafter has its own native LangStr regime...
-(defmethod rdf/render-literal :rdf/LangStr
+(defmethod rdf/render-literal ::rdf/LangStr
   [lstr]
   (grafter-2.rdf.protocols/->LangString
    (str lstr)
