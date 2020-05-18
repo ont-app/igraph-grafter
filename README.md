@@ -6,47 +6,81 @@ Part of the ont-app library, dedicated to Ontology-driven development.
 
 ## Usage
 
-Grafter 2.0 defines the following protocols:
+```
+(def repo (sail-repo))
+(def conn (->connection repo))
+(def g (igraph-grafter/make-graph conn ::MyGraphName))
+```
 
-- IURIable
-  - ->uri [uri] -> a URI as grafter.vocabularies.core/URI'
-  
-- IStatement
-  - subject 
-  - predicate
-  - object
-  - context
-  
-- ITripleWriteable
-  - add-statement
-  
-- ITripleDeleteable
-  - delete-statement
-  - delete
-  
-- ITripleReadable
-  - to-statements
-  
-- ITransactable
-  - begin
-  - commit
-  - rollback
+The `repo` can by any rdf4j SAIL (Storage And Inference Layer)
+instantiated by the grafte [repository
+module](https://cljdoc.org/d/grafter/grafter/2.0.3/api/grafter-2.rdf4j.repository).
 
-- ISPARQLable
-  - query-dataset
-  
-- ISPARQLUpdateable
-  - update!
-  
-- IGrafterRDFType
-  ->grafter-type 
-  
-- IRDFString
+The default is an in-memory store.
+
+Use _make-graph_ to create a wrapper around the connection to allow
+for IGraph member access methods. Mutability is _mutable_, meaning
+that triples are added and removed with _add!_ and _subtract~_.
+
+The original connection can be attained with `(:conn g)`.
+The KWI of the associated named graph can be attained with `(:graph-kwi g)`.
+
+### Keyword Identifiers as URIs
+
+In keeping with the overall approach of the ont-app libraries, URIs
+are encoded in clojure as Keyword Identifiers (KWIs), using the method
+defined in
+`[ont-app/vocabulary](https://github.com/ont-app/vocabulary)`.
+
+This library uses metadata attached to Clojure namespaces to define mappings between namespaced keywords in Clojure code and corresponding RDF namespaces.
+
+### Literals
+
+This library is supported by
+`[igraph/rdf](https://github.com/ont-app/rdf)`, which defines a
+_render-literal_ multimethod.
+
+#### xsd
+Grafter has its own logic for dealing with _xsd_ datatypes for
+scalars, and this library follows this.
+
+#### language-tagged strings
+A #lstr reader macro is defined. For example, `#lstr "gaol@en-GB"` in
+clojure code will translate to RDF `"gaol"@en-GB`.
+
+#### #inst values
+Clojure's #inst reader macro is also supported. Its contents are
+rendered as a string matching _igraph-grafter/date-time-regex_,
+matching the standard format expected by
+_clojure.instant/read-instant-date_.  For example, `#inst "2000"` is
+translated as "2000-01-01T00:00:00Z". Such strings will be matched and
+instantiated as #inst expressions.
+
+#### Transit-encoding of clojure containers
+Clojure's standard container classes when provided as literal RDF
+objects are encoded as transit, and decoded transparently. 
+
+So the vector `[1 2 3]` would be encoded in the RDF store as
+`"[1,2,3]"^^transit:json`. When read back in again, it will be
+reconsituted as the original vector.
+
+This works because the data types have _derive_ statements to the
+dispatch value for the dispatch value _:rdf-app/TransitData_, whose
+method does the rendering.
+
+```
+(derive clojure.lang.PersistentVector :rdf-app/TransitData)
+```
+
+If you prefer that vectors and such be handled some other way, this
+declaration can be reversed with the _underive_ function.
+
+See the documentation of ont-app/rdf for more details.
 
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2020 FIXME
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at

@@ -47,9 +47,13 @@
      ]]
    [ont-app.igraph.graph :as simple-graph]
    [ont-app.igraph-vocabulary.core :as igv]
-   [ont-app.rdf.core :as rdf]
+   [ont-app.rdf.core :as rdf-app]
    [ont-app.vocabulary.core :as voc]  
-   ))
+   )
+  (:import
+   [org.eclipse.rdf4j.repository.sail SailRepositoryConnection]
+   )
+  )
 
 
 (voc/put-ns-meta!
@@ -63,7 +67,7 @@
 
 (def ontology (reduce igraph/union
                       [igv/ontology
-                       rdf/ontology
+                       rdf-app/ontology
                        @ont/ontology-atom]))
 
 ;; FUN WITH READER MACROS
@@ -110,18 +114,19 @@ Where
              (spec/valid? ::date-time-str v)
              (clojure.instant/read-instant-date v)
              ;; Transit-tagged data ...
-             (spec/valid? ::rdf/transit-tag v)
-             (let [matches (re-matches rdf/transit-re v)]
-               (rdf/read-transit-json (matches 1)))
+             (spec/valid? ::rdf-app/transit-tag v)
+             (let [matches (re-matches rdf-app/transit-re v)]
+               (rdf-app/read-transit-json (matches 1)))
              ;; language-tagged strings ...
              (and (map? v) (:string v) (:lang v))
-             (rdf/->LangStr (:string v) (name (:lang v)))
+             (rdf-app/->LangStr (:string v) (name (:lang v)))
              ;; otherwise just return v
              :default v)))
 
 (defn ask-query [conn query-string]
   "Returns true/false for `query-string` posed to `conn`"
   (repo/query conn query-string))
+
 
 (defn interpret-query [conn query-string]
   "Returns (<bmap'>, ...)  returned from `query-string` posed to `conn`
@@ -139,13 +144,24 @@ Where
 (defrecord GrafterGraph
     [conn graph-kwi]
   IGraph
-  (normal-form [this] (rdf/query-for-normal-form interpret-query (:conn this)))
-  (subjects [this] (rdf/query-for-subjects interpret-query (:conn this)))
-  (get-p-o [this s] (rdf/query-for-p-o interpret-query (:conn this) s))
-  (get-o [this s p] (rdf/query-for-o interpret-query (:conn this) s p))
-  (ask [this s p o] (rdf/ask-s-p-o ask-query (:conn this) s p o))
+  (normal-form [this] (rdf-app/query-for-normal-form graph-kwi
+                                                 interpret-query
+                                                 (:conn this)))
+  (subjects [this] (rdf-app/query-for-subjects  graph-kwi
+                                            interpret-query
+                                            (:conn this)))
+  (get-p-o [this s] (rdf-app/query-for-p-o graph-kwi
+                                       interpret-query
+                                       (:conn this) s))
+  (get-o [this s p] (rdf-app/query-for-o graph-kwi
+                                     interpret-query
+                                     (:conn this) s p))
+  (ask [this s p o] (rdf-app/ask-s-p-o graph-kwi
+                                   ask-query
+                                   (:conn this) s p o))
   (igraph/query [this q] (interpret-query (:conn this) q))
   (mutability [this] ::igraph/mutable)
+  
   #?(:clj clojure.lang.IFn
      :cljs cljs.core/IFn)
   (invoke [g] (normal-form g))
@@ -167,11 +183,7 @@ Where
 See also the documentation for ont-app.vocabulary.core
 "
   [conn graph-kwi]
-  {:pre [(satisfies? grafter/ITripleReadable conn)
-         (satisfies? grafter/ISPARQLable conn)
-         (satisfies? grafter/ITripleWriteable conn)
-         (satisfies? grafter/ITripleDeleteable conn)
-         (satisfies? grafter/ITransactable conn)
+  {:pre [(instance? SailRepositoryConnection conn)  
          ]
    }
   (->GrafterGraph conn graph-kwi))
@@ -180,7 +192,7 @@ See also the documentation for ont-app.vocabulary.core
   "Returns either a URI or a literal to be added to a graph"
   (if (keyword? elt)
     (->uri (voc/uri-for elt))
-    (rdf/render-literal elt)))
+    (rdf-app/render-literal elt)))
 
 ^:reduce-fn
 (defn collect-p-o 
@@ -217,7 +229,7 @@ Where
 `:grafter/Instant` triggers handling of an #inst
 `:grafter/DatatypeURI` triggers handling as an xsd value or other ^^datatype.
 `nil` signals handling with standard logic for literals per
-  `rdf/render-literal-dispatch`
+  `rdf-app/render-literal-dispatch`
 "
   
   (cond (inst? x)
@@ -226,25 +238,25 @@ Where
         (satisfies? grafter/IDatatypeURI x)
         :grafter/DatatypeURI))
 
-;; This will inform rdf/render-literal-dispatch of platform-specific dispatches:
-(reset! rdf/special-literal-dispatch special-literal-dispatch)
+;; This will inform rdf-app/render-literal-dispatch of platform-specific dispatches:
+(reset! rdf-app/special-literal-dispatch special-literal-dispatch)
 
 
-(defmethod rdf/render-literal :grafter/Instant
+(defmethod rdf-app/render-literal :grafter/Instant
   [ts]
   (str (.toInstant ts))) ;;"^^" grafter.vocabularies.xsd/xsd:dateTime))
 
-(defmethod rdf/render-literal :grafter/DatatypeURI
+(defmethod rdf-app/render-literal :grafter/DatatypeURI
   [x]
   ;; grafter handles these automatically
   x)
 
 ;; Grafter has its own native LangStr regime...
-(defmethod rdf/render-literal ::rdf/LangStr
+(defmethod rdf-app/render-literal ::rdf-app/LangStr
   [lstr]
   (grafter-2.rdf.protocols/->LangString
    (str lstr)
-   (rdf/lang lstr)))
+   (rdf-app/lang lstr)))
 
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`

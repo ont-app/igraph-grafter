@@ -37,7 +37,9 @@
    [ont-app.vocabulary.core :as voc]
    )
   (:import
-   [org.eclipse.rdf4j.model.impl SimpleValueFactory]
+   [org.eclipse.rdf4j.model.impl SimpleValueFactory
+    org.eclipse.rdf4j.repository.sail SailRepositoryConnection
+    ]
    ))
 
 (glog/log-reset!)
@@ -81,6 +83,14 @@
              ls))
       )
     ))
+
+(deftest new-name-new-graph
+  (glog/log-reset!)
+  (glog/set-level! ::rdf/QueryForNormalForm :glog/INFO)
+  (testing "New graph with new name should be empty"
+    (let [g' (igraphter/make-graph conn ::Test2)]
+      (is (= (igraph/normal-form g')
+             {})))))
 
 ;; (add conn T)
 
