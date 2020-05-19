@@ -1,26 +1,20 @@
 (ns ont-app.igraph-grafter.core
   (:require
    [clojure.spec.alpha :as spec]
-   [grafter-2.rdf4j.repository :as repo
-    :refer [
-            ->connection
-            sail-repo
-            ]]
+   [grafter-2.rdf4j.repository :as repo]
    [grafter.vocabularies.core :as gvoc
     :refer [->uri
             ]]
    [grafter-2.rdf.protocols :as grafter
-    :refer [->Triple
-            ->Quad
+    :refer [->Quad
             add-batched
             delete
             ]]
-
-   [ont-app.graph-log.core :as glog]
-   [ont-app.graph-log.levels :refer :all]
-   
+   [ont-app.graph-log.levels
+    :refer [trace
+            warn
+            ]]
    [ont-app.igraph-grafter.ont :as ont]
-   
    [ont-app.igraph.core :as igraph
     :refer
     [IGraph
@@ -28,11 +22,8 @@
      add!
      add-to-graph
      ask
-     difference
      get-o
      get-p-o
-     intersection
-     invoke
      match-or-traverse
      mutability
      normal-form
@@ -40,8 +31,6 @@
      remove-from-graph
      subjects
      subtract!
-     traverse
-     triples-format
      union
      unique
      ]]
@@ -65,7 +54,7 @@
   :author "Eric D. Scott"
   } )
 
-(def ontology (reduce igraph/union
+(def ontology (reduce union
                       [igv/ontology
                        rdf-app/ontology
                        @ont/ontology-atom]))

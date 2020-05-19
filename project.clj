@@ -5,14 +5,15 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
-                 [org.clojure/spec.alpha "0.2.176"]
+                 [org.clojure/spec.alpha "0.2.187"]
                  ;; 3rd party libs
                  [cheshire "5.10.0"]
                  [com.cognitect/transit-clj "1.0.324"]
+                 [com.fzakaria/slf4j-timbre "0.3.19"]
                  [com.taoensso/timbre "4.10.0"]
-                 [grafter "2.1.7"]
+                 [grafter "2.1.8"]
                  [lein-doo "0.1.11"]
-                 [selmer "1.12.23"]
+                 [selmer "1.12.24"]
                  ;; Ont-app libs
                  [ont-app/graph-log "0.1.1-SNAPSHOT"]
                  [ont-app/igraph "0.1.5-SNAPSHOT"]
@@ -64,7 +65,7 @@
   :codox {:output-path "doc"}
 
   :profiles {:uberjar {:aot :all}
-             :dev {:dependencies [[binaryage/devtools "0.9.10"]
+             :dev {:dependencies [[binaryage/devtools "1.0.0"]
                                   ]
                    :source-paths ["src"] 
                    :clean-targets
