@@ -12,49 +12,32 @@
             query
             sail-repo
             ]]
-   [grafter.url :as gurl
-    :refer [->url
-            ]]
-   [grafter.vocabularies.core :as gvoc
-    :refer [->uri
-            ]]
-   [grafter-2.rdf.protocols :as grafter
-    :refer [->Triple
-            ->Quad
-            add
-            add-batched
-            ]]
-   ;; [ont-app.sparql-client.core :as sparql-client]
    [ont-app.igraph.core :as igraph
     :refer [add!
             subtract!
+            normal-form
+            union
             ]]
-   [ont-app.igraph.graph :as native-graph]
+   [ont-app.igraph.graph :as simple-graph]
+   [ont-app.igraph.core-test :as igraph-test]
    [ont-app.graph-log.core :as glog]
    [ont-app.graph-log.levels :refer :all]
-   [ont-app.igraph-grafter.core :as igraphter]
+   [ont-app.igraph-grafter.core :as igraphter
+    :refer [make-graph
+            ]]
    [ont-app.rdf.core :as rdf]
    [ont-app.vocabulary.core :as voc]
-   )
-  (:import
-   [org.eclipse.rdf4j.model.impl SimpleValueFactory
-    org.eclipse.rdf4j.repository.sail SailRepositoryConnection
-    ]
    ))
 
 (glog/log-reset!)
-;; (glog/set-level! ::StartingCollectPO :glog/WARN)
-;; (glog/set-level! ::CollectedPOsFromVector :glog/WARN)
-;; (glog/set-level! ::CollectedVectorOfVectors :glog/WARN)
-;; (glog/set-level! ::rdf/CollectNormalFormBinding :glog/WARN)
 
 (def the igraph/unique)
 
+;; Acquire an in-memory repo, and a connection...
 (def repo (sail-repo))
 (def conn (->connection repo))
 
-
-(def g (igraphter/make-graph conn ::Test))
+(def g (make-graph conn ::Test))
 
 (deftest literals-tests
   (glog/log-reset!)
@@ -86,50 +69,51 @@
 
 (deftest new-name-new-graph
   (glog/log-reset!)
-  (glog/set-level! ::rdf/QueryForNormalForm :glog/INFO)
   (testing "New graph with new name should be empty"
-    (let [g' (igraphter/make-graph conn ::Test2)]
+    (let [g' (make-graph conn ::Test2)]
       (is (= (igraph/normal-form g')
              {})))))
 
-;; (add conn T)
+(deftest test-readme
+  (glog/log-reset!)
+  (testing "igraph readme stuff"
+    (reset! igraph-test/eg
+            (make-graph conn ::igraph-test/graph_eg))
+    (reset! igraph-test/other-eg
+            (make-graph conn ::igraph-test/graph_other-eg))
+    (reset! igraph-test/eg-with-types
+            (make-graph conn ::igraph-test/graph_eg-with-types))
+    (reset! igraph-test/eg-for-cardinality-1
+            (make-graph conn ::igraph-test/eg-for-cardinality-1))
+    (reset! igraph-test/mutable-eg
+            (make-graph  conn ::igraph-test/mutable-eg))
+        
+    (add! @igraph-test/eg igraph-test/eg-data)
+    (add! @igraph-test/other-eg igraph-test/other-eg-data)
 
-;; (def response (query conn "SELECT * WHERE {?s ?p ?o}"))
+    (add! @igraph-test/eg-with-types
+          (normal-form
+           (union (simple-graph/make-graph
+                   :contents igraph-test/eg-data)
+                  (simple-graph/make-graph
+                   :contents igraph-test/types-data))))
+    (add! @igraph-test/eg-for-cardinality-1
+          (normal-form
+           (reduce union
+                   (simple-graph/make-graph
+                    :contents igraph-test/eg-data)
+                   [
+                    (simple-graph/make-graph
+                     :contents igraph-test/types-data)
+                    (simple-graph/make-graph
+                     :contents igraph-test/cardinality-1-appendix)
+                    ])))
 
+    (igraph-test/readme)
 
-#_(defn subjects [conn]
-  (map (fn [bmap] (-> bmap
-                      (:s)
-                      (str)
-                      (voc/keyword-for)))
-       (query conn "SELECT * WHERE {?s ?p ?o}")))
-
-;; (defn collect-kwi [macc k v]
-;;   (assoc macc k (voc/keyword-for v)))
-  
-;; (defn query-for-spo [conn]
-;;   (map (fn [bmap]
-;;          (reduce-kv collect-kwi {} bmap))
-;;        (query conn "SELECT * WHERE {?s ?p ?o}")))
-
-;; (defn interpret-query [conn query-string]
-;;   (map (fn [bmap]
-;;          (reduce-kv collect-kwi {} bmap))
-;;        (query conn query-string)))
-
-
-
-;; (def subjects (rdf/query-for-subjects interpret-query conn))
-
-;; (def normal-form (rdf/query-for-normal-form interpret-query conn))
-
-;; (def po (rdf/query-for-p-o interpret-query conn ::A))
-
-;; (def o (rdf/query-for-o interpret-query conn ::A ::A))
-
-;; (def answer (rdf/ask-s-p-o ask-query conn ::A ::A ::A))
-
-;; (def to-add [::A ::A ::B])
-
+    ;; Mutable model...
+    (add! @igraph-test/mutable-eg igraph-test/eg-data)
+    (igraph-test/readme-mutable)
+    ))
 
 

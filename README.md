@@ -7,20 +7,40 @@ Part of the ont-app library, dedicated to Ontology-driven development.
 ## Usage
 
 ```
-(def repo (sail-repo))
-(def conn (->connection repo))
-(def g (igraph-grafter/make-graph conn ::MyGraphName))
+(ns my-namespace
+  (require 
+    [grafter-2.rdf4j.repository :as repo]
+    [ont-app.igraph-grafter.core :as igraph-grafter]
+    [ont-app.vocabulary.core :as voc]  
+    ))
+
+(voc/put-ns-meta!
+  'my-namespace
+  {
+    :vann/preferredNamespacePrefix "myns"
+    :vann/preferredNamespaceUri "http://my.uri.com/"
+  })
+  
+(def repo (repo/sail-repo))
+(def conn (repo/->connection repo))
+(def g (igraph-grafter/make-graph conn :myns/MyGraph))
 ```
 
 The `repo` can by any rdf4j SAIL (Storage And Inference Layer)
-instantiated by the grafte [repository
+instantiated by the grafter [repository
 module](https://cljdoc.org/d/grafter/grafter/2.0.3/api/grafter-2.rdf4j.repository).
 
 The default is an in-memory store.
 
 Use _make-graph_ to create a wrapper around the connection to allow
 for IGraph member access methods. Mutability is _mutable_, meaning
-that triples are added and removed with _add!_ and _subtract~_.
+that triples are added and removed with _add!_ and _subtract!_.
+
+```
+> (add! g [:myns/Subject :rdf/type :myns/Thing])
+```
+
+See [ont-app/IGraph](https://github.com/ont-app/igraph) for documenation.
 
 The original connection can be attained with `(:conn g)`.
 The KWI of the associated named graph can be attained with `(:graph-kwi g)`.
@@ -30,14 +50,14 @@ The KWI of the associated named graph can be attained with `(:graph-kwi g)`.
 In keeping with the overall approach of the ont-app libraries, URIs
 are encoded in clojure as Keyword Identifiers (KWIs), using the method
 defined in
-`[ont-app/vocabulary](https://github.com/ont-app/vocabulary)`.
+[ont-app/vocabulary](https://github.com/ont-app/vocabulary).
 
 This library uses metadata attached to Clojure namespaces to define mappings between namespaced keywords in Clojure code and corresponding RDF namespaces.
 
 ### Literals
 
 This library is supported by
-`[igraph/rdf](https://github.com/ont-app/rdf)`, which defines a
+[igraph/rdf](https://github.com/ont-app/rdf), which defines a
 _render-literal_ multimethod.
 
 #### xsd
