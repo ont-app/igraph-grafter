@@ -37,7 +37,8 @@
    [ont-app.igraph.graph :as simple-graph]
    [ont-app.igraph-vocabulary.core :as igv]
    [ont-app.rdf.core :as rdf-app]
-   [ont-app.vocabulary.core :as voc]  
+   [ont-app.rdf.lstr :refer [->LangStr lang]]
+   [ont-app.vocabulary.core :as voc]
    )
   (:import
    [org.eclipse.rdf4j.repository.sail SailRepositoryConnection]
@@ -69,7 +70,7 @@
    (defn on-js-reload [] )
    )
 
-;; NO READER MACROS BEYOND THIS POINT (except in def of GrafterGraph)
+;; MINIMAL READER MACROS BEYOND THIS POINT
 
 
 (def date-time-regex
@@ -108,7 +109,7 @@ Where
                (rdf-app/read-transit-json (matches 1)))
              ;; language-tagged strings ...
              (and (map? v) (:string v) (:lang v))
-             (rdf-app/->LangStr (:string v) (name (:lang v)))
+             (->LangStr (:string v) (name (:lang v)))
              ;; otherwise just return v
              :default v)))
 
@@ -150,7 +151,7 @@ Where
                                    (:conn this) s p o))
   (igraph/query [this q] (interpret-query (:conn this) q))
   (mutability [this] ::igraph/mutable)
-  
+
   #?(:clj clojure.lang.IFn
      :cljs cljs.core/IFn)
   (invoke [g] (normal-form g))
@@ -241,11 +242,11 @@ Where
   x)
 
 ;; Grafter has its own native LangStr regime...
-(defmethod rdf-app/render-literal ::rdf-app/LangStr
+(defmethod rdf-app/render-literal :rdf-app/LangStr
   [lstr]
   (grafter-2.rdf.protocols/->LangString
    (str lstr)
-   (rdf-app/lang lstr)))
+   (lang lstr)))
 
 (defn alter-graph
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`

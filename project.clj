@@ -3,14 +3,16 @@
   :url "https://github.com/ont-app/igraph-grafter"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/clojurescript "1.10.520"]
+  :dependencies [;; for deps :tree
+                 
+                 [org.clojure/clojure "1.10.1"]
+                 [org.clojure/clojurescript "1.10.597"]
                  [org.clojure/spec.alpha "0.2.187"]
                  ;; 3rd party libs
                  [cheshire "5.10.0"]
                  [com.cognitect/transit-clj "1.0.324"]
                  [com.fzakaria/slf4j-timbre "0.3.19"]
-                 [com.taoensso/timbre "4.10.0"]
+                 [com.taoensso/timbre "4.11.0-alpha1"]
                  [grafter "2.1.8"]
                  [lein-doo "0.1.11"]
                  [selmer "1.12.24"]
