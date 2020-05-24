@@ -60,19 +60,6 @@
                        rdf-app/ontology
                        @ont/ontology-atom]))
 
-;; FUN WITH READER MACROS
-
-#?(:cljs
-   (enable-console-print!)
-   )
-
-#?(:cljs
-   (defn on-js-reload [] )
-   )
-
-;; MINIMAL READER MACROS BEYOND THIS POINT
-
-
 (def date-time-regex
   "Matches the date-time-str encoded for #inst's, e.g. '2000-01-01T00:00:00Z'"
   #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
@@ -152,8 +139,7 @@ Where
   (igraph/query [this q] (interpret-query (:conn this) q))
   (mutability [this] ::igraph/mutable)
 
-  #?(:clj clojure.lang.IFn
-     :cljs cljs.core/IFn)
+  clojure.lang.IFn
   (invoke [g] (normal-form g))
   (invoke [g s] (get-p-o g s))
   (invoke [g s p] (match-or-traverse g s p))
@@ -228,7 +214,8 @@ Where
         (satisfies? grafter/IDatatypeURI x)
         :grafter/DatatypeURI))
 
-;; This will inform rdf-app/render-literal-dispatch of platform-specific dispatches:
+;; This will inform rdf-app/render-literal-dispatch of platform-specific
+;; dispatches:
 (reset! rdf-app/special-literal-dispatch special-literal-dispatch)
 
 
@@ -258,7 +245,7 @@ Where
     either grafter/add-batched or grafter/delete
   "
   [add-or-delete g source-graph]
-  (warn ::StartingAlterGraph
+  (trace ::StartingAlterGraph
          :log/source-graph source-graph)
   (let [collect-quad (fn [g-uri vacc s p o]
                        (collect-p-o g-uri

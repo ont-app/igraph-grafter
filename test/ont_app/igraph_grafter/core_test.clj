@@ -4,8 +4,7 @@
    :vann/preferredNamespaceUri "http://naturallexicon.org/grafter/core-test#"
    }
   (:require
-   #?(:cljs [cljs.test :refer-macros [async deftest is testing]]
-      :clj [clojure.test :refer :all])
+   [clojure.test :refer :all]
    [grafter-2.rdf4j.repository :as repo
     :refer [
             ->connection

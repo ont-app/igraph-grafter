@@ -2,7 +2,7 @@
   (:require
    ;;
    [ont-app.igraph.core :as igraph :refer [add]]
-   [ont-app.igraph.graph :as g :refer [make-graph]]
+   [ont-app.igraph.graph :as simple-graph :refer [make-graph]]
    [ont-app.igraph-vocabulary.core :as igv]
    [ont-app.vocabulary.core :as voc]
    )
@@ -29,6 +29,11 @@
    :rdf/type :grafter/LiteralType
    :rdfs/comment "A dispatch value for literals encoded as XSD
    datatypes in the grafter codebase."
+   ]
+  [:rdf-app/LangStr
+   :rdf/type :grafter/LiteralType
+   :rdfs/comment "A dispatch value for literals encoded as a language-tagged 
+   string"
    ]
   ])
 
