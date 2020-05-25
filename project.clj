@@ -14,7 +14,6 @@
                  [com.fzakaria/slf4j-timbre "0.3.19"]
                  [com.taoensso/timbre "4.11.0-alpha1"]
                  [grafter "2.1.8"]
-                 [selmer "1.12.24"]
                  ;; Ont-app libs
                  [ont-app/graph-log "0.1.1-SNAPSHOT"]
                  [ont-app/igraph "0.1.5-SNAPSHOT"]

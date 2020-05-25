@@ -1,4 +1,10 @@
 (ns ont-app.igraph-grafter.core
+   {
+    :voc/mapsTo 'ont-app.igraph-grafter.ont
+    :author "Eric D. Scott"
+    :doc "Defines `GrafterGraph` record, which implements the `IGraph`, 
+`IGraphMutable` and `IFn` protocols."
+    } 
   (:require
    [clojure.spec.alpha :as spec]
    [grafter-2.rdf4j.repository :as repo]
@@ -14,7 +20,6 @@
     :refer [trace
             warn
             ]]
-   [ont-app.igraph-grafter.ont :as ont]
    [ont-app.igraph.core :as igraph
     :refer
     [IGraph
@@ -45,20 +50,10 @@
    )
   )
 
-
-(voc/put-ns-meta!
- 'ont-app.igraph-grafter.core
- {
-  :voc/mapsTo 'ont-app.igraph-grafter.ont
-  :doc "Defines `GrafterGraph` record, which implements the `IGraph`,
-  `IGraphMutable` and `IFn` protocols."
-  :author "Eric D. Scott"
-  } )
-
 (def ontology (reduce union
                       [igv/ontology
-                       rdf-app/ontology
-                       @ont/ontology-atom]))
+                       rdf-app/ontology]))
+
 
 (def date-time-regex
   "Matches the date-time-str encoded for #inst's, e.g. '2000-01-01T00:00:00Z'"
@@ -67,17 +62,20 @@
 (spec/def ::date-time-str
   (fn [s] (and (string? s) (re-matches date-time-regex s))))
 
-^:reduce-kv-fn
+;; a reduce-kv-fn
+^:Map
 (defn collect-kwis-and-literals [macc k v]
-  "Returns `macc`' substituing translation of `v` -> idomatic igraph datatypes
+  "Returns `macc`' substituing  `v` -> <v'>
 Where
 <macc> := {<k> <v'>, ...}, translated from a binding map from a query
-<k> is a var in a query
-<v> is the raw value bound to <k>
+<k> is a var in a query, :~ ':?.*'
+<v> is the raw value bound to <k> by the query response
 <v'> is the translation of <v> into idiomatic igraph datatypes:
   URIs -> KWIs
+  <data-time string> -> #inst ....
   {:lang  ... :string ...} #lstr <string>@<lang>
   .*^^transit:json -> decoded transit
+  Otherwise, just <v>
 "
   (trace ::StartingKwisAndLiterals
          :log/k k
@@ -119,6 +117,7 @@ Where
        (repo/query conn query-string)))
 
 (defrecord GrafterGraph
+    ;; IGraph wrapper for <conn> with named graph <graph-kiwi>
     [conn graph-kwi]
   IGraph
   (normal-form [this] (rdf-app/query-for-normal-form graph-kwi
@@ -153,8 +152,7 @@ Where
 (defn make-graph 
   "Returns an instance of `GrafterGraph` for `conn` and `graph-kwi`
   Where
-  <conn> implements the grafter ITripleReadable, ISPARQLable,
-    ITripleWriteable, ITripleDeleteable, and ITransactable protocols
+  <conn> is a SailRepositoryconnection
   <graph-kwi> is a keyword mapped to a URI by voc namespace metadata.
 See also the documentation for ont-app.vocabulary.core
 "
@@ -199,31 +197,31 @@ See also the documentation for ont-app.vocabulary.core
                          graph-uri))))
 
 (defn special-literal-dispatch [x]
-  "Returns :grafter/Instant,  :grafter/DatatypeURI or nil for `x`.
+  "Returns :rdf-app/Instant,  :rdf-app/DatatypeURI or nil for `x`.
 Where
 <x> is a literal value 
-`:grafter/Instant` triggers handling of an #inst
-`:grafter/DatatypeURI` triggers handling as an xsd value or other ^^datatype.
+`:rdf-app/Instant` triggers handling of an #inst
+`:rdf-app/DatatypeURI` triggers handling as an xsd value or other ^^datatype.
 `nil` signals handling with standard logic for literals per
   `rdf-app/render-literal-dispatch`
 "
   
   (cond (inst? x)
-        :grafter/Instant
+        :rdf-app/Instant
         
         (satisfies? grafter/IDatatypeURI x)
-        :grafter/DatatypeURI))
+        :rdf-app/XsdDatatype))
 
 ;; This will inform rdf-app/render-literal-dispatch of platform-specific
 ;; dispatches:
 (reset! rdf-app/special-literal-dispatch special-literal-dispatch)
 
 
-(defmethod rdf-app/render-literal :grafter/Instant
+(defmethod rdf-app/render-literal :rdf-app/Instant
   [ts]
   (str (.toInstant ts))) ;;"^^" grafter.vocabularies.xsd/xsd:dateTime))
 
-(defmethod rdf-app/render-literal :grafter/DatatypeURI
+(defmethod rdf-app/render-literal :rdf-app/XsdDatatype
   [x]
   ;; grafter handles these automatically
   x)
@@ -324,4 +322,3 @@ Where
                         ^{::igraph/triples-format :normal-form}
                         {s {p (g s p)}}))))
   g)
-

@@ -8,12 +8,10 @@
    [grafter-2.rdf4j.repository :as repo
     :refer [
             ->connection
-            query
             sail-repo
             ]]
    [ont-app.igraph.core :as igraph
     :refer [add!
-            subtract!
             normal-form
             union
             ]]
@@ -24,8 +22,7 @@
    [ont-app.igraph-grafter.core :as igraphter
     :refer [make-graph
             ]]
-   [ont-app.rdf.core :as rdf]
-   [ont-app.vocabulary.core :as voc]
+   [ont-app.rdf.core :as rdf-app]
    ))
 
 (glog/log-reset!)
@@ -36,27 +33,27 @@
 (def repo (sail-repo))
 (def conn (->connection repo))
 
-(def g (make-graph conn ::Test))
+(def g (make-graph conn ::Test)) ;; for basic tests
 
-(deftest literals-tests
+(deftest literals-tests ;; Time, #lstr, xsd
   (glog/log-reset!)
   (glog/set-level! ::igraphter/StartingKwisAndLiterals :glog/INFO)
   (testing "literals should render and complete round trip"
     (let [i #inst "2000"
           ]
       (add! g [::LiteralsTest ::hasInst i])
-      (is (= (rdf/render-literal i)
+      (is (= (rdf-app/render-literal i)
              "2000-01-01T00:00:00Z"))
       (is (= (the (g ::LiteralsTest ::hasInst))
              i)))
     (let [i 1]
       (add! g [::LiteralsTest ::hasInt i])
-      (is (= (rdf/render-literal 1)
+      (is (= (rdf-app/render-literal 1)
              1))
       (is (= (the (g ::LiteralsTest ::hasInt))
              1)))
     (let [ls #lstr "blah@en"
-          lsl (rdf/render-literal #lstr "blah@en")]
+          lsl (rdf-app/render-literal #lstr "blah@en")]
       (add! g [::LiteralsTest ::hasLangStr ls])
       (is (instance? grafter_2.rdf.protocols.LangString lsl))
       (is (= (:string lsl "blah")))
@@ -73,9 +70,10 @@
       (is (= (igraph/normal-form g')
              {})))))
 
-(deftest test-readme
+(deftest test-readme ;; Do all the examples in IGraph's readme...
   (glog/log-reset!)
   (testing "igraph readme stuff"
+    ;; These graph references are used in IGraph's testing module:
     (reset! igraph-test/eg
             (make-graph conn ::igraph-test/graph_eg))
     (reset! igraph-test/other-eg
