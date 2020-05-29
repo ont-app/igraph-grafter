@@ -42,8 +42,8 @@
    [ont-app.igraph.graph :as simple-graph]
    [ont-app.igraph-vocabulary.core :as igv]
    [ont-app.rdf.core :as rdf-app]
-   [ont-app.rdf.lstr :refer [->LangStr lang]]
    [ont-app.vocabulary.core :as voc]
+   [ont-app.vocabulary.lstr :refer [->LangStr lang]]
    )
   (:import
    [org.eclipse.rdf4j.repository.sail SailRepositoryConnection]

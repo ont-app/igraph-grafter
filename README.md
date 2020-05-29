@@ -4,6 +4,12 @@ A port of the IGraph protocols to the Grafter protocols.
 
 Part of the ont-app library, dedicated to Ontology-driven development.
 
+It is hosted on the JVM only.
+
+## Contents
+- [Usage](#h2-usage)
+
+<a name="h2-usage"></a>
 ## Usage
 
 ```
@@ -38,6 +44,9 @@ that triples are added and removed with _add!_ and _subtract!_.
 
 ```
 > (add! g [:myns/Subject :rdf/type :myns/Thing])
+> (g :myns/Subject)
+{:rdf/type #{myns/Thing}}
+>
 ```
 
 See [ont-app/IGraph](https://github.com/ont-app/igraph) for documenation.
@@ -48,11 +57,19 @@ The KWI of the associated named graph can be attained with `(:graph-kwi g)`.
 ### Keyword Identifiers as URIs
 
 In keeping with the overall approach of the ont-app libraries, URIs
-are encoded in clojure as Keyword Identifiers (KWIs), using the method
-defined in
+are encoded in clojure as Keyword Identifiers (KWIs), using the
+constructs defined in
 [ont-app/vocabulary](https://github.com/ont-app/vocabulary).
 
-This library uses metadata attached to Clojure namespaces to define mappings between namespaced keywords in Clojure code and corresponding RDF namespaces.
+This library uses metadata attached to Clojure namespaces to define
+mappings between namespaced keywords in Clojure code and corresponding
+RDF namespaces.
+
+So in the example above, `:myns/Thing` would translate to
+`"http://my.uri.com/Thing"`, because of the
+_vann:preferredNamespacePrefix_ and _vann/preferredNamespaceUri_
+declarations in _voc/put-ns-meta!_ (which works on both the JVM and in
+clojurescript).
 
 ### Literals
 
@@ -62,11 +79,7 @@ _render-literal_ multimethod.
 
 #### xsd
 Grafter has its own logic for dealing with _xsd_ datatypes for
-scalars, and this library follows this.
-
-#### language-tagged strings
-A #lstr reader macro is defined. For example, `#lstr "gaol@en-GB"` in
-clojure code will translate to RDF `"gaol"@en-GB`.
+scalars, and this library integrates with this directly.
 
 #### #inst values
 Clojure's #inst reader macro is also supported. Its contents are
@@ -76,27 +89,34 @@ _clojure.instant/read-instant-date_.  For example, `#inst "2000"` is
 translated as "2000-01-01T00:00:00Z". Such strings will be matched and
 instantiated as #inst expressions.
 
+
+#### language-tagged strings
+A `#lstr` reader macro is defined to support language-tagged strings
+in clojue code, For example, `#lstr "gaol@en-GB"` in clojure code will
+translate to RDF `"gaol"@en-GB`. Conversely, data imported into a
+graph from RDF will be translated using the same reader macro.
+
 #### Transit-encoding of clojure containers
 Clojure's standard container classes when provided as literal RDF
-objects are encoded as transit, and decoded transparently. 
+objects are encoded in RDF as transit, and decoded transparently. 
 
-So the vector `[1 2 3]` would be encoded in the RDF store as
-`"[1,2,3]"^^transit:json`. When read back in again, it will be
+So for example the vector `[1 2 3]` would be encoded in the RDF store
+as `"[1,2,3]"^^transit:json`. When read back in again, it will be
 reconsituted as the original vector.
 
-This works because the data types have _derive_ statements to the
-dispatch value for the dispatch value _:rdf-app/TransitData_, whose
-method does the rendering.
+This works because clojure's vector type has a clojure _derive_
+statement to the dispatch value _:rdf-app/TransitData_, whose
+_render-literal_ method does the rendering.
 
 ```
 (derive clojure.lang.PersistentVector :rdf-app/TransitData)
 ```
 
-If you prefer that vectors and such be handled some other way, this
-declaration can be reversed with the _underive_ function.
+If you prefer that a vector or some other clojure composite data
+structure be handled some other way, this declaration can be reversed
+with the _underive_ function.
 
 See the documentation of ont-app/rdf for more details.
-
 
 ## License
 
