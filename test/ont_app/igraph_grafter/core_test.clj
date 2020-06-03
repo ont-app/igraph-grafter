@@ -56,8 +56,8 @@
           lsl (rdf-app/render-literal #lstr "blah@en")]
       (add! g [::LiteralsTest ::hasLangStr ls])
       (is (instance? grafter_2.rdf.protocols.LangString lsl))
-      (is (= (:string lsl "blah")))
-      (is (= (:lang lsl "en")))
+      (is (= (:string lsl) "blah"))
+      (is (= (:lang lsl) "en"))
       (is (= (the (g ::LiteralsTest ::hasLangStr))
              ls))
       )

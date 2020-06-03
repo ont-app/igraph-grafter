@@ -6,6 +6,7 @@
 `IGraphMutable` and `IFn` protocols."
     } 
   (:require
+   [clojure.instant]
    [clojure.spec.alpha :as spec]
    [grafter-2.rdf4j.repository :as repo]
    [grafter.vocabularies.core :as gvoc
@@ -63,8 +64,7 @@
   (fn [s] (and (string? s) (re-matches date-time-regex s))))
 
 ;; a reduce-kv-fn
-^:Map
-(defn collect-kwis-and-literals [macc k v]
+(defn collect-kwis-and-literals 
   "Returns `macc`' substituing  `v` -> <v'>
 Where
 <macc> := {<k> <v'>, ...}, translated from a binding map from a query
@@ -77,6 +77,7 @@ Where
   .*^^transit:json -> decoded transit
   Otherwise, just <v>
 "
+  [macc k v]
   (trace ::StartingKwisAndLiterals
          :log/k k
          :log/v v)
@@ -98,12 +99,13 @@ Where
              ;; otherwise just return v
              :default v)))
 
-(defn ask-query [conn query-string]
+(defn ask-query 
   "Returns true/false for `query-string` posed to `conn`"
+  [conn query-string]
   (repo/query conn query-string))
 
 
-(defn interpret-query [conn query-string]
+(defn interpret-query 
   "Returns (<bmap'>, ...)  returned from `query-string` posed to `conn`
 Where
 <query-string> is a SPARQL query
@@ -112,6 +114,7 @@ Where
   as appropriate, per the `collect-kwis-and-literals` function.
 <bmap> is a binding map returned by posing <query-string> to <conn>
 "
+  [conn query-string]
   (map (fn [bmap]
          (reduce-kv collect-kwis-and-literals {} bmap))
        (repo/query conn query-string)))
@@ -162,13 +165,14 @@ See also the documentation for ont-app.vocabulary.core
    }
   (->GrafterGraph conn graph-kwi))
 
-(defn render-element [elt]
+(defn render-element 
   "Returns either a URI or a literal to be added to a graph"
+  [elt]
   (if (keyword? elt)
     (->uri (voc/uri-for elt))
     (rdf-app/render-literal elt)))
 
-^:reduce-fn
+;; reduce function
 (defn collect-p-o 
   "Returns [<quad>, ...] with a quad added for `s`,  `p-o`, `graph-uri`
   Where
@@ -196,7 +200,7 @@ See also the documentation for ont-app.vocabulary.core
                                  (map render-element p-o))
                          graph-uri))))
 
-(defn special-literal-dispatch [x]
+(defn special-literal-dispatch 
   "Returns :rdf-app/Instant,  :rdf-app/DatatypeURI or nil for `x`.
 Where
 <x> is a literal value 
@@ -205,7 +209,7 @@ Where
 `nil` signals handling with standard logic for literals per
   `rdf-app/render-literal-dispatch`
 "
-  
+  [x]
   (cond (inst? x)
         :rdf-app/Instant
         
