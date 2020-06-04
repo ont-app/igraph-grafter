@@ -9,9 +9,7 @@
    [clojure.instant]
    [clojure.spec.alpha :as spec]
    [grafter-2.rdf4j.repository :as repo]
-   [grafter.vocabularies.core :as gvoc
-    :refer [->uri
-            ]]
+   [grafter.vocabularies.core :as gvoc :refer [->uri]]
    [grafter-2.rdf.protocols :as grafter
     :refer [->Quad
             add-batched
@@ -22,29 +20,30 @@
             warn
             ]]
    [ont-app.igraph.core :as igraph
-    :refer
-    [IGraph
-     add
-     add!
-     add-to-graph
-     ask
-     get-o
-     get-p-o
-     match-or-traverse
-     mutability
-     normal-form
-     reduce-spo
-     remove-from-graph
-     subjects
-     subtract!
-     union
-     unique
-     ]]
+    :refer [IGraph
+            add
+            add!
+            add-to-graph
+            ask
+            get-o
+            get-p-o
+            match-or-traverse
+            mutability
+            normal-form
+            reduce-spo
+            remove-from-graph
+            subjects
+            subtract!
+            union
+            unique
+            ]]
    [ont-app.igraph.graph :as simple-graph]
    [ont-app.igraph-vocabulary.core :as igv]
    [ont-app.rdf.core :as rdf-app]
    [ont-app.vocabulary.core :as voc]
-   [ont-app.vocabulary.lstr :refer [->LangStr lang]]
+   [ont-app.vocabulary.lstr
+    :refer [->LangStr
+            lang]]
    )
   (:import
    [org.eclipse.rdf4j.repository.sail SailRepositoryConnection]
@@ -156,8 +155,10 @@ Where
   "Returns an instance of `GrafterGraph` for `conn` and `graph-kwi`
   Where
   <conn> is a SailRepositoryconnection
-  <graph-kwi> is a keyword mapped to a URI by voc namespace metadata.
-See also the documentation for ont-app.vocabulary.core
+  <graph-kwi> is a keyword mapped to a URI by voc namespace metadata, or nil
+    to specify the DEFAULT graph.
+  See also the documentation for ont-app.vocabulary.core for discussion of
+  KWIs.
 "
   [conn graph-kwi]
   {:pre [(instance? SailRepositoryConnection conn)  
@@ -237,13 +238,13 @@ Where
    (str lstr)
    (lang lstr)))
 
-(defn alter-graph
+(defn- alter-graph!
   "Side effect: Either adds or deletes the contents of `source-graph` from `g`
   Where
   <source graph> is a simple-graph 'adapter' into which content to be removed
     has been read.
   <g> is a GrafterGraph
-  <add-or-delete> := fn [conn [<Quad>, ...]]
+  <add-or-delete> := fn [conn [<Quad>, ...]], called for side-effects
     either grafter/add-batched or grafter/delete
   "
   [add-or-delete g source-graph]
@@ -266,7 +267,7 @@ Where
   [g to-add]
   {:pre [(= (igraph/mutability g) ::igraph/mutable)]
    }
-  (alter-graph add-batched g (add (simple-graph/make-graph)
+  (alter-graph! add-batched g (add (simple-graph/make-graph)
                                   ^{::igraph/triples-format :vector}
                                   to-add)))
 
@@ -274,7 +275,7 @@ Where
   [g to-add]
   {:pre [(= (igraph/mutability g) ::igraph/mutable)]
    }
-  (alter-graph add-batched g (add (simple-graph/make-graph)
+  (alter-graph! add-batched g (add (simple-graph/make-graph)
                                   ^{::igraph/triples-format :vector-of-vectors}
                                   to-add))
     
@@ -282,7 +283,7 @@ Where
 
 (defmethod add-to-graph [GrafterGraph :normal-form]
   [g to-add]
-  (alter-graph add-batched g (add (simple-graph/make-graph)
+  (alter-graph! add-batched g (add (simple-graph/make-graph)
                                   ^{::igraph/triples-format :normal-form}
                                   to-add))
 
@@ -291,21 +292,21 @@ Where
 
 (defmethod igraph/remove-from-graph [GrafterGraph :vector]
   [g to-remove]
-  (alter-graph delete g (add (simple-graph/make-graph)
+  (alter-graph! delete g (add (simple-graph/make-graph)
                              ^{::igraph/triples-format :vector}
                              to-remove))
   g)
 
 (defmethod igraph/remove-from-graph [GrafterGraph :vector-of-vectors]
   [g to-remove]
-  (alter-graph delete g (add (simple-graph/make-graph)
+  (alter-graph! delete g (add (simple-graph/make-graph)
                              ^{::igraph/triples-format :vector-of-vectors}
                              to-remove))
   g)
 
 (defmethod igraph/remove-from-graph [GrafterGraph :normal-form]
   [g to-remove]
-  (alter-graph delete g (add (simple-graph/make-graph)
+  (alter-graph! delete g (add (simple-graph/make-graph)
                              ^{::igraph/triples-format :normal-form}
                              to-remove))
   g)
@@ -316,7 +317,7 @@ Where
         s (first to-remove)
         p (unique (rest to-remove))
         ]
-    (alter-graph delete g
+    (alter-graph! delete g
                  (if (and s (not p)) ;; [<s>]
                    (add adapter
                         ^{::igraph/triples-format :normal-form}

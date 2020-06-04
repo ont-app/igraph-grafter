@@ -4,9 +4,10 @@ A port of the IGraph protocols to the Grafter protocols.
 
 Part of the ont-app library, dedicated to Ontology-driven development.
 
-It is hosted on the JVM only.
+At this point it is hosted on the JVM only.
 
 ## Contents
+- [Motivation](#h2-motivation)
 - [Usage](#h2-usage)
 - [Keyword Identifiers as URIs](#h2-keyword-identifiers)
 - [Literals](#h2-literals)
@@ -16,39 +17,57 @@ It is hosted on the JVM only.
   - [Transit-encoding of Clojure containers](#h3-transit-encoding)
 - [License](#h2-license)
 
+<a name="h2-motivation"></a>
+## Motivation
+The people at [Swirrl](https://www.swirrl.com/) have graciously
+provided a large body of rdf-centric clojure code on github, largely
+centered around a project called
+[Grafter](https://github.com/Swirrl/grafter). Grafter is largely a
+wrapper around the API for [Eclipse rdf4j](https://rdf4j.org/), which
+provides a wide variety of ways to deal with RDF data.
+
+The purpose of this library is to allow connections to grafter-based
+RDF model to be viewed under the
+[IGraph](https://github.com/ont-app/igraph) protocols, which defines a
+generic container type for named relations between named entities.
+
 <a name="h2-usage"></a>
 ## Usage
 
-This will instantiate a graph:
+Available at clojars:
+
+```
+[ont-app/igraph-grafter "0.1.0"]
+```
+
+The following code will instantiate a graph:
 
 ```
 (ns my-namespace
+  {
+    :vann/preferredNamespacePrefix "myns"
+    :vann/preferredNamespaceUri "http://my.uri.com/"
+  }
   (require 
     [grafter-2.rdf4j.repository :as repo]
     [ont-app.igraph-grafter.core :as igraph-grafter]
     [ont-app.vocabulary.core :as voc]  
     ))
 
-(voc/put-ns-meta!
-  'my-namespace
-  {
-    :vann/preferredNamespacePrefix "myns"
-    :vann/preferredNamespaceUri "http://my.uri.com/"
-  })
-  
 (def repo (repo/sail-repo))
 (def conn (repo/->connection repo))
 (def g (igraph-grafter/make-graph conn :myns/MyGraph))
 ```
 
-The `repo` can by any rdf4j SAIL (Storage And Inference Layer)
+The `repo` can be any rdf4j [SAIL (Storage And Inference Layer)](https://rdf4j.org/javadoc/latest/org/eclipse/rdf4j/sail/package-summary.html)
 instantiated by the grafter [repository
 module](https://cljdoc.org/d/grafter/grafter/2.0.3/api/grafter-2.rdf4j.repository).
 
 The default is an in-memory store.
 
 Use _make-graph_ to create a wrapper around the connection to allow
-for IGraph member access methods. Mutability is _mutable_, meaning
+for IGraph member access methods. Mutability is
+[_mutable_](https://github.com/ont-app/igraph#IGraphMutable), meaning
 that triples are added and removed with _add!_ and _subtract!_.
 
 ```
@@ -62,7 +81,10 @@ See [ont-app/IGraph](https://github.com/ont-app/igraph) for
 full documentation of the IGraph and IGraphMutable protocols.
 
 The original connection can be attained with `(:conn g)`.  The KWI of
-the associated named graph can be attained with `(:graph-kwi g)`.
+the associated named graph can be attained with `(:graph-kwi g)`. This
+will give you low-level access to the data set. See the
+[Grafter](https://github.com/Swirrl/grafter) project for details.
+
 
 <a name="h2-keyword-identifiers"></a>
 ## Keyword Identifiers as URIs
@@ -79,8 +101,7 @@ RDF namespaces.
 So in the example above, `:myns/Thing` would translate to
 `"http://my.uri.com/Thing"`, because of the
 _vann:preferredNamespacePrefix_ and _vann/preferredNamespaceUri_
-declarations in _voc/put-ns-meta!_ (which works on both the JVM and in
-clojurescript).
+declarations in the metadata of _my-namespace_.
 
 <a name="h2-literals"></a>
 ### Literals
@@ -93,7 +114,8 @@ described below.
 
 <a name="h3-xsd"></a>
 #### xsd values
-Grafter has its own logic for dealing with _xsd_ datatypes for
+Grafter has its own logic for dealing with [_xsd_
+datatypes](https://en.wikipedia.org/wiki/XML_Schema_(W3C)) for
 scalars, and _ont-app/igraph-grafter_ integrates with this directly.
 
 <a name="h3-inst-values"></a>
@@ -101,13 +123,15 @@ scalars, and _ont-app/igraph-grafter_ integrates with this directly.
 Clojure's #inst reader macro is also supported. Its contents are
 rendered as a string matching _igraph-grafter/date-time-regex_,
 matching the standard format expected by
-_clojure.instant/read-instant-date_.  For example, `#inst "2000"` is
-translated as "2000-01-01T00:00:00Z". Such strings will be matched and
-instantiated as #inst expressions.
+[_clojure.instant/read-instant-date_](https://clojuredocs.org/clojure.instant/read-instant-date).
+For example, `#inst "2000"` is translated as
+"2000-01-01T00:00:00Z". Such strings will be matched and instantiated
+as #inst expressions.
 
 <a name="h3-language-tagged-strings"></a>
 #### language-tagged strings
-A `#lstr` reader macro is defined to support language-tagged strings
+A `#lstr` reader macro is defined to support [language-tagged
+strings](https://github.com/ont-app/vocabulary/#h2-language-tagged-strings)
 in clojue code, For example, `#lstr "gaol@en-GB"` in clojure code will
 translate to RDF `"gaol"@en-GB`. Conversely, data imported into a
 graph from RDF will be translated using the same reader macro.
@@ -115,7 +139,9 @@ graph from RDF will be translated using the same reader macro.
 <a name="h3-transit-encoding"></a>
 #### Transit-encoding of clojure containers
 Clojure's standard container classes when provided as literal RDF
-objects are encoded in RDF as transit, and decoded transparently.
+objects are [encoded in RDF as
+transit](https://github.com/ont-app/rdf#h3-transit-encoded-values),
+and decoded transparently.
 
 So for example the vector `[1 2 3]` would be encoded in the RDF store
 as `"[1,2,3]"^^transit:json`. When read back in again, it will be
