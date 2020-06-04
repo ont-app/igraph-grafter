@@ -1,11 +1,11 @@
-(defproject ont-app/igraph-grafter "0.1.0"
+(defproject ont-app/igraph-grafter "0.1.1-SNAPSHOT"
   :description "Wrapper around swirrl/grafter for IGraph protocols."
   :url "https://github.com/ont-app/igraph-grafter"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [;; disambiguate deps :tree
                  [com.google.guava/guava "25.1-jre"]
-                 [commons-codec "1.11"]
+                 [commons-codec "1.14"] ;; [commons-codec "1.11"]
                  ;; clojure core
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/spec.alpha "0.2.187"]
