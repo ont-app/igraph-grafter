@@ -62,6 +62,8 @@
 (spec/def ::date-time-str
   (fn [s] (and (string? s) (re-matches date-time-regex s))))
 
+(defn bnode-translator [bnode]
+  )
 ;; a reduce-kv-fn
 (defn collect-kwis-and-literals 
   "Returns `macc`' substituing  `v` -> <v'>
@@ -174,7 +176,7 @@ Where
     (rdf-app/render-literal elt)))
 
 ;; reduce function
-(defn collect-p-o 
+(defn- collect-p-o 
   "Returns [<quad>, ...] with a quad added for `s`,  `p-o`, `graph-uri`
   Where
   <quad> is a Grafter Quad
