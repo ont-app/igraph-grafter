@@ -5,6 +5,7 @@
    }
   (:require
    [clojure.test :refer :all]
+   
    [grafter-2.rdf4j.repository :as repo
     :refer [
             ->connection
@@ -113,4 +114,12 @@
     (igraph-test/readme-mutable)
     ))
 
-
+(deftest issue-1-blank-nodes
+  (glog/log-reset!)
+  (testing "blank-nodes"
+    (let [b (grafter_2.rdf.protocols.BNode. "tablegroupG__21835")]
+      (is (= (str b)
+             "tablegroupG__21835"))
+      (is (clojure.spec.alpha/valid? ::rdf-app/bnode-kwi
+                                     (igraphter/bnode-kwi b))))))
+  

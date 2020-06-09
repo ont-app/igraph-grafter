@@ -62,8 +62,17 @@
 (spec/def ::date-time-str
   (fn [s] (and (string? s) (re-matches date-time-regex s))))
 
-(defn bnode-translator [bnode]
-  )
+(defn bnode-kwi
+  "Returns  KWI for `bnode`
+  Where
+  <bnode> is an instance of grafter_2.rdf.protocols.BNode
+  "
+  [bnode]
+  {:pre [(= (type bnode) grafter_2.rdf.protocols.BNode)]
+   :post [#(spec/valid? ::rdf-app/bnode-kwi %)]
+   }
+  (keyword "_" (str bnode)))
+
 ;; a reduce-kv-fn
 (defn collect-kwis-and-literals 
   "Returns `macc`' substituing  `v` -> <v'>

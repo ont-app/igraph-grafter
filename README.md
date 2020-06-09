@@ -103,6 +103,14 @@ So in the example above, `:myns/Thing` would translate to
 _vann:preferredNamespacePrefix_ and _vann/preferredNamespaceUri_
 declarations in the metadata of _my-namespace_.
 
+Blank nodes are interned in the namespace `_`. 
+
+```
+> (bnode-kwi #object[grafter_2.rdf.protocols.BNode yadda "tablegroupG__21835"]
+:_/tablegroupG__21835
+>
+```
+
 <a name="h2-literals"></a>
 ### Literals
 
