@@ -121,5 +121,9 @@
       (is (= (str b)
              "tablegroupG__21835"))
       (is (clojure.spec.alpha/valid? ::rdf-app/bnode-kwi
-                                     (igraphter/bnode-kwi b))))))
+                                     (igraphter/bnode-kwi b)))
+      (is (= (igraphter/collect-kwis-and-literals {} :blank b)
+             {:blank (igraphter/bnode-kwi b)}))
+      )))
+      
   

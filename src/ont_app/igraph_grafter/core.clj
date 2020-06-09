@@ -96,6 +96,9 @@ Where
              ;; URIs ...
              (= (type v) java.net.URI)
              (voc/keyword-for (str v))
+             ;;
+             (= (type v) grafter_2.rdf.protocols.BNode)
+             (bnode-kwi v)
              ;; Instant
              (spec/valid? ::date-time-str v)
              (clojure.instant/read-instant-date v)
