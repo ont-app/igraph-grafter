@@ -1,6 +1,6 @@
 # <img src="http://ericdscott.com/NaturalLexiconLogo.png" alt="NaturalLexicon logo" :width=100 height=100/> ont-app/igraph-grafter 
 
-A port of the IGraph protocols to the Grafter protocols.
+A port of the IGraph protocols to the Grafter protocols (JVM only at present).
 
 Part of the ont-app library, dedicated to Ontology-driven development.
 
@@ -37,7 +37,7 @@ generic container type for named relations between named entities.
 Available at clojars:
 
 ```
-[ont-app/igraph-grafter "0.1.0"]
+[ont-app/igraph-grafter "0.1.1"]
 ```
 
 The following code will instantiate a graph:
