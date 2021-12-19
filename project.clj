@@ -1,4 +1,4 @@
-(defproject ont-app/igraph-grafter "0.1.1-SNAPSHOT"
+(defproject ont-app/igraph-grafter "0.1.1"
   :description "Wrapper around swirrl/grafter for IGraph protocols."
   :url "https://github.com/ont-app/igraph-grafter"
   :license {:name "Eclipse Public License"
