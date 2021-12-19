@@ -4,20 +4,17 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [;; disambiguate deps :tree
-                 [com.google.guava/guava "25.1-jre"]
-                 [commons-codec "1.14"] ;; [commons-codec "1.11"]
+                 [org.clojure/spec.alpha "0.3.218"]
+                 [cheshire "5.10.1"]
                  ;; clojure core
-                 [org.clojure/clojure "1.10.1"]
-                 [org.clojure/spec.alpha "0.2.187"]
+                 [org.clojure/clojure "1.10.3"]
                  ;; 3rd party libs
-                 [cheshire "5.10.0"]
-                 [com.cognitect/transit-clj "1.0.324"]
-                 [com.fzakaria/slf4j-timbre "0.3.19"]
-                 [com.taoensso/timbre "4.11.0-alpha1"]
-                 [grafter "2.1.8"]
+                 [grafter "2.1.16"]
                  ;; Ont-app libs
-                 [ont-app/graph-log "0.1.1"]
-                 [ont-app/rdf "0.1.0"]
+                 [ont-app/graph-log "0.1.5"
+                  :exclusions [org.clojure/clojurescript]
+                  ]
+                 [ont-app/rdf "0.1.4"]
                  ]
   
   :target-path "target/%s"
