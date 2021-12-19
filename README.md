@@ -4,8 +4,6 @@ A port of the IGraph protocols to the Grafter protocols (JVM only at present).
 
 Part of the ont-app library, dedicated to Ontology-driven development.
 
-At this point it is hosted on the JVM only.
-
 ## Contents
 - [Motivation](#h2-motivation)
 - [Usage](#h2-usage)
