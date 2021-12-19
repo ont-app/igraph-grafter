@@ -34,9 +34,8 @@ generic container type for named relations between named entities.
 
 Available at clojars:
 
-```
-[ont-app/igraph-grafter "0.1.1"]
-```
+[![Clojars Project](https://img.shields.io/clojars/v/ont-app/igraph-grafter.svg)](https://clojars.org/ont-app/igraph-grafter)
+
 
 The following code will instantiate a graph:
 
