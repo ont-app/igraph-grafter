@@ -27,7 +27,16 @@ provides a wide variety of ways to deal with RDF data.
 The purpose of this library is to allow connections to grafter-based
 RDF model to be viewed under the
 [IGraph](https://github.com/ont-app/igraph) protocols, which defines a
-generic container type for named relations between named entities.
+generic container type for named relations between named entities:
+
+```
+(g) -> {s {p #{o}}}
+(g s) -> {p #{o}}
+(g s p) -> #{o}
+(g s p o) -> (truthy)
+```
+
+This also includes a facility to map between namespaced Clojure keywords and URIs.
 
 <a name="h2-usage"></a>
 ## Usage
